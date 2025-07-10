@@ -13,9 +13,9 @@ import WorkProcessOne from "@/components/WorkProcessOne";
 
 
 export const metadata = {
-  title: "About || AglieTech - IT Solutions & Technology NEXT JS Template",
+  title: "About || PromoGame - Gamify Solutions & Technology",
   description:
-    "Agiletech provide you to build the best agency, app, business, digital, it services, it solutions, network solution, startup, technology, technology company, technology service template.",
+    "PromoGame provide you to build the best agency, app, business, digital, it services, it solutions, network solution, startup, technology, technology company, technology service template.",
 };
 
 
@@ -34,11 +34,11 @@ const page = () => {
       {/* ServiceAreaOne */}
       <ServiceAreaOne />
 
-      {/* FAQ Area One */}
+      {/* Sản Phẩm Nổi Bật */}
       <FaqAreaOne />
 
       {/* Team Area One */}
-      <TeamAreaOne />
+      {/* <TeamAreaOne /> */}
 
       {/* Counter Area One */}
       <CounterAreaOne />

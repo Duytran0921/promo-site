@@ -4,130 +4,39 @@ const FaqAreaOne = () => {
   return (
     <>
       {/*==================== Faq area start ====================*/}
-      <div
-        className='faq-area faq-area-margin-top bg-cover pd-top-90 pd-bottom-110'
-        style={{ backgroundImage: 'url("./assets/img/bg/3.png")' }}
-      >
-        <div className='container'>
-          <div className='row pd-top-120'>
+      <div className='faq-area faq-area-margin-top bg-cover pt-[90px] pb-[50px]'>
+        <div className='container mx-auto px-4'>
+          <div className='flex flex-wrap mb-8'>
             <div
-              className='col-xl-5 col-lg-6 col-md-8 order-lg-last'
-              data-aos='fade-left'
-              data-aos-delay='100'
-              data-aos-duration='1500'
+              className='w-full lg:w-1/2 xl:w-7/12 h-[200px] bg-white/20 backdrop-blur-sm rounded-lg p-2'
             >
-              <div className='about-thumb-inner pt-lg-3'>
-                <img
-                  className='main-img'
-                  src='assets/img/about/4.png'
-                  alt='img'
-                />
-                <img
-                  className='animate-img-bottom-right top_image_bounce'
-                  src='assets/img/about/5.png'
-                  alt='img'
-                />
-              </div>
-            </div>
-            <div
-              className='col-xl-7 col-lg-6'
-              data-aos='fade-right'
-              data-aos-delay='100'
-              data-aos-duration='1500'
-            >
-              <div className='section-title mb-0 mt-4 mt-lg-0'>
-                <h6 className='sub-title'>Sản Phẩm nổi bật</h6>
-                <h2 className='title'>
+              <div className='section-title mb-0 mt-4 lg:mt-0'>
+                <h6 className='sub-title'>Highlight Platform</h6> 
+                <h2 className='title p-0'>
                   <span>Gamified Promotion</span> Platform
                 </h2>
-                <p className='content'>
+                <p className='content p-0'>
                 B2B-ready platform designed for CDPs, MiniApp providers, and marketing agencies to launch gamified marketing campaigns at scale
                 </p>
               </div>
-              <div
-                className='accordion accordion-inner style-2 accordion-icon-left mt-3'
-                id='accordionExample'
-              >
-                <div className='accordion-item'>
-                  <h2 className='accordion-header' id='headingOne'>
-                    <button
-                      className='accordion-button'
-                      type='button'
-                      data-bs-toggle='collapse'
-                      data-bs-target='#collapseOne'
-                      aria-expanded='true'
-                      aria-controls='collapseOne'
-                    >
-                      What services do you offer?
-                    </button>
-                  </h2>
-                  <div
-                    id='collapseOne'
-                    className='accordion-collapse collapse show'
-                    aria-labelledby='headingOne'
-                    data-bs-parent='#accordionExample'
-                  >
-                    <div className='accordion-body'>
-                      Many desktop publishing packages and web page editors now
-                      use Lorem Ipsum as their default model text, search for
-                      'lorem ipsum' will uncover
-                    </div>
-                  </div>
-                </div>
-                <div className='accordion-item'>
-                  <h2 className='accordion-header' id='headingTwo'>
-                    <button
-                      className='accordion-button collapsed'
-                      type='button'
-                      data-bs-toggle='collapse'
-                      data-bs-target='#collapseTwo'
-                      aria-expanded='false'
-                      aria-controls='collapseTwo'
-                    >
-                      How long does it take for you to complete a project?
-                    </button>
-                  </h2>
-                  <div
-                    id='collapseTwo'
-                    className='accordion-collapse collapse'
-                    aria-labelledby='headingTwo'
-                    data-bs-parent='#accordionExample'
-                  >
-                    <div className='accordion-body'>
-                      Many desktop publishing packages and web page editors now
-                      use Lorem Ipsum as their default model text, search for
-                      'lorem ipsum' will uncover
-                    </div>
-                  </div>
-                </div>
-                <div className='accordion-item'>
-                  <h2 className='accordion-header' id='headingThree'>
-                    <button
-                      className='accordion-button collapsed'
-                      type='button'
-                      data-bs-toggle='collapse'
-                      data-bs-target='#collapseThree'
-                      aria-expanded='false'
-                      aria-controls='collapseThree'
-                    >
-                      How much does it cost to work with your agency?
-                    </button>
-                  </h2>
-                  <div
-                    id='collapseThree'
-                    className='accordion-collapse collapse'
-                    aria-labelledby='headingThree'
-                    data-bs-parent='#accordionExample'
-                  >
-                    <div className='accordion-body'>
-                      Many desktop publishing packages and web page editors now
-                      use Lorem Ipsum as their default model text, search for
-                      'lorem ipsum' will uncover
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
+          </div>
+          <div className='flex flex-wrap relative overflow-hidden h-[600px] rounded-lg shadow-xl'>
+            <video
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                zIndex: -1
+              }}
+              src='assets/video/Demo 1.mp4'
+              autoPlay
+              muted
+              loop
+            />
           </div>
         </div>
       </div>

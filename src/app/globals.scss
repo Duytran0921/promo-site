@@ -1,5 +1,7 @@
-// Tailwind CSS - Temporarily disabled
-// @import "tailwindcss";
+// Tailwind CSS - Enabled for gradual migration
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 // Plugin CSS
 @import "~bootstrap/dist/css/bootstrap.min.css";
@@ -8,3 +10,34 @@
 @import "~slick-carousel/slick/slick-theme.css";
 
 @import "~/public/assets/scss/style.scss";
+
+// Responsive design utilities
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+}
+
+// Animation optimization for smooth scrolling
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Hardware acceleration for animations
+.animate-scroll-left,
+.animate-scroll-right {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000;
+}
+
+// Smooth scrolling optimization
+@media (prefers-reduced-motion: no-preference) {
+  .animate-scroll-left,
+  .animate-scroll-right {
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+  }
+}

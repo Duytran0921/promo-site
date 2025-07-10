@@ -45,12 +45,11 @@ const AboutAreaOne = () => {
               <div className='section-title mt-5 mt-lg-0'>
                 <h6 className='sub-title'>ABOUT US</h6>
                 <h2 className='title'>
-                  It Is A Critical Component Of <span>Modern</span> Businesses
+                   <span>GAMIFY</span> EVERY BUSINESS GOAL
                 </h2>
                 <p className='content mb-4 mb-xl-5'>
-                  Lorem Ipsum is simply dummy text of the printing and
-                  typesetting industry Loreaim Ipsum has been the industry's
-                  standard dummy
+                  We partner with brands and agencies to launch 
+                  gamified campaigns that drive engagement — faster, easier, and fully measurable.
                 </p>
                 <div className='row'>
                   <div className='col-md-6'>
@@ -59,10 +58,9 @@ const AboutAreaOne = () => {
                         <img src='assets/img/icon/2.png' alt='img' />
                       </div>
                       <div className='details'>
-                        <h5>Our Ambition</h5>
+                        <h5>Our Mission</h5>
                         <p>
-                          Lorem is Ipsum is simply is design iomyi is text Lorem
-                          Ipsum is simply is our busi designer is our country.
+                          Empowering brands to gamify marketing goals — flexibly and efficiently.
                         </p>
                       </div>
                     </div>
@@ -73,10 +71,9 @@ const AboutAreaOne = () => {
                         <img src='assets/img/icon/3.png' alt='img' />
                       </div>
                       <div className='details'>
-                        <h5>Our Ambition</h5>
+                        <h5>Our Vision</h5>
                         <p>
-                          Lorem is Ipsum is simply is design iomyi is text Lorem
-                          Ipsum is simply is our busi designer is our country.
+                          Leading in fast, effective & secure gamification solutions.
                         </p>
                       </div>
                     </div>

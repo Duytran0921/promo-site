@@ -1,108 +1,42 @@
-import Link from 'next/link';
 import React from 'react';
-import { FaFacebookF, FaInstagram, FaTwitter } from 'react-icons/fa';
 
 const TeamAreaOne = () => {
   return (
     <>
       {/*====================== team area start ======================*/}
-      <div className="team-area bg-relative pd-top-90 pd-bottom-90">
-        <div className="container">
-          <div className="section-title text-center">
-            <h6 className="sub-title">MEET OUR EXPERTS</h6>
-            <h2 className="title">
-              Your Partner In <span>Digital</span> Success
+      <div className="relative py-20 px-4 bg-[url('/assets/img/banner/15.jpg')]  bg-center bg-cover">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h6 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Why Us ?</h6>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+              Trust is earned through <span className="text-blue-600">caution and care</span>.
             </h2>
           </div>
-          <div className="row">
-            <div className="col-lg-4 col-md-6">
-              <div className="single-team-inner text-center">
-                <div className="thumb">
-                  <img src="assets/img/team/1.png" alt="img" />
-                  <ul className="team-social-inner">
-                    <li>
-                      <Link href="#">
-                        <FaFacebookF />
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="#">
-                        <FaTwitter />
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="#">
-                        <FaInstagram />
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-                <div className="details">
-                  <h5>
-                    <Link href="/team-details">Devon Lane</Link>
-                  </h5>
-                  <p>Merketing Department</p>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="flex justify-center">
+              <div className="bg-blue-300/50 backdrop-blur-sm rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-8 text-center h-80 w-full max-w-sm flex flex-col justify-center">
+                <h5 className="text-xl font-bold text-gray-900 mb-4">Your Reputation Comes First</h5>
+                <p className="text-gray-600 leading-relaxed">
+                  Every campaign goes through strict checks 
+                  to ensure your brand shows up exactly as intended — polished, 
+                  trustworthy, and on point.
+                </p>
               </div>
             </div>
-            <div className="col-lg-4 col-md-6">
-              <div className="single-team-inner text-center">
-                <div className="thumb">
-                  <img src="assets/img/team/2.png" alt="img" />
-                  <ul className="team-social-inner">
-                    <li>
-                      <Link href="#">
-                        <FaFacebookF />
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="#">
-                        <FaTwitter />
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="#">
-                        <FaInstagram />
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-                <div className="details">
-                  <h5>
-                    <Link href="/team-details">Darrell Steward</Link>
-                  </h5>
-                  <p>It Department</p>
-                </div>
+            <div className="flex justify-center">
+              <div className="bg-blue-300/50 backdrop-blur-sm rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-8 text-center h-80 w-full max-w-sm flex flex-col justify-center">
+                <h5 className="text-xl font-bold text-gray-900 mb-4">Your Data Is Treated Like an Asset</h5>
+                <p className="text-gray-800 leading-relaxed">
+                  Anti-cheat systems, access control, and strict privacy protocols.
+                </p>
               </div>
             </div>
-            <div className="col-lg-4 col-md-6">
-              <div className="single-team-inner text-center">
-                <div className="thumb">
-                  <img src="assets/img/team/3.png" alt="img" />
-                  <ul className="team-social-inner">
-                    <li>
-                      <Link href="#">
-                        <FaFacebookF />
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="#">
-                        <FaTwitter />
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="#">
-                        <FaInstagram />
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-                <div className="details">
-                  <h5>
-                    <Link href="/team-details">Bessie Cooper</Link>
-                  </h5>
-                  <p>Software Department</p>
-                </div>
+            <div className="flex justify-center">
+              <div className="bg-blue-300/50 backdrop-blur-sm rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-8 text-center h-80 w-full max-w-sm flex flex-col justify-center">
+                <h5 className="text-xl font-bold text-gray-900 mb-4">Transparent Operations</h5>
+                <p className="text-gray-00 leading-relaxed">
+                  Real-time reporting, clear metrics, and full visibility into campaign performance and results.
+                </p>
               </div>
             </div>
           </div>
