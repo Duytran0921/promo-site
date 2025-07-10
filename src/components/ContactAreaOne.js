@@ -22,22 +22,22 @@ const ContactAreaOne = () => {
           />
         </div>
 
-        <div className="max-w-7xl mx-auto relative z-10">
+        <div className="max-w-7xl mx-auto relative z-10 rounded-2xl">
           <div className="relative">
             {/* Background Image - Full Width */}
             <div
-              className="w-full"
+              className="w-full rounded-2xl"
               data-aos="fade-right"
               data-aos-delay="200"
               data-aos-duration="1500"
             >
               <div className="relative rounded-2xl shadow-2xl">
                 <img 
-                  className="w-full h-[600px] lg:h-[700px] object-cover" 
-                  src="assets/img/bg/4.png" 
+                  className="w-full h-[600px] lg:h-[700px] object-cover " 
+                  src="assets/img/banner/getintouch.png" 
                   alt="Contact illustration" 
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 via-blue-900/20 to-transparent"></div>
+                {/* <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 via-blue-900/20 to-transparent"></div> */}
               </div>
             </div>
 
