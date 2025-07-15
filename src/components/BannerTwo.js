@@ -1,123 +1,56 @@
 'use client'
-import Link from 'next/link';
 import React, { useState } from 'react';
-import { FaPlus } from 'react-icons/fa';
-import ModalVideo from 'react-modal-video';
+import BasicInfoForm from './BasicInfoForm';
+
 const BannerTwo = () => {
   const [isOpen, setOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const openForm = () => {
+    setIsFormOpen(true);
+  };
+
+  const closeForm = () => {
+    setIsFormOpen(false);
+  };
+
   return (
     <>
       {/* ================== BannerTwo Start ==================*/}
       <div
-        className="banner-area bg-relative banner-area-2 bg-cover"
-        style={{ backgroundImage: 'url("./assets/img/bg/8.png")' }}
+        className="relative bg-cover bg-center bg-no-repeat min-h-[300px] max-h-[600px] h-screen bg-[url('/assets/img/bg/banner2.png')]"
       >
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-6 align-self-center">
-              <div className="banner-inner pe-xl-5">
-                <h6
-                  className="subtitle "
-                  data-aos="fade-right"
-                  data-aos-delay="100" 
-                  data-aos-duration="1500"
-                >
-                  Designing for the future
-                </h6>
-                <h2
-                  className="title "
-                  data-aos="fade-right"
-                  data-aos-delay="200"
-                  data-aos-duration="1500"
-                >
-                  {' '}
-                  Revolutionize Your <span>Workflow</span> With SaaS
-                </h2>
-                <p
-                  className="content pe-xl-5 "
-                  data-aos="fade-right"
-                  data-aos-delay="250"
-                  data-aos-duration="1500"
-                >
-                  And In Order To Make A Business, Brand Advertising And
-                  Marketing Plays An Important Role. Similarly, In Making
-                  Cultivation Business Are Necessary.
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+          <div className="flex flex-col justify-between py-8">
+            {/* Content area - can be expanded later */}
+            <div className="">
+              {/* <div className="text-center text-white">
+                <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                  Chào mừng đến với PromoGame
+                </h1>
+                <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
+                  Nền tảng tạo và quản lý minigame hàng đầu cho Zalo Mini-app và Web-app
                 </p>
-                <Link
-                  className="btn btn-border-base "
-                  data-aos="fade-right"
-                  data-aos-delay="300"
-                  data-aos-duration="1500"
-                  href="/about"
-                >
-                  Discover More <FaPlus />
-                </Link>
-                <div
-                  className="d-inline-block align-self-center mt-4 mt-md-0"
-                  data-aos="fade-right"
-                  data-aos-delay="350"
-                  data-aos-duration="1500"
-                >
-                  <span
-                    onClick={() => setOpen(true)}
-                    className="video-play-btn-hover"
-                  >
-                    <img src="assets/img/video.svg" alt="img" />{' '}
-                    <h6 className="d-inline-block">how we work</h6>
-                  </span>
-
-                  <div></div>
-                </div>
-              </div>
+              </div> */}
             </div>
-            <div
-              className="col-lg-6 col-md-9 "
-              data-aos="fade-left"
-              data-aos-delay="100"
-              data-aos-duration="1500"
-            >
-              <div className="banner-thumb-2 mt-4 mt-lg-0">
-                <img
-                  className="banner-animate-img banner-animate-img-4"
-                  src="assets/img/banner-2/3.png"
-                  alt="img"
-                />
-                <div className="main-img-wrap">
-                  <img
-                    className="banner-animate-img banner-animate-img-1 left_image_bounce"
-                    src="assets/img/banner-2/4.png"
-                    alt="img"
-                  />
-                  <img
-                    className="banner-animate-img banner-animate-img-2 left_image_bounce"
-                    src="assets/img/banner-2/5.png"
-                    alt="img"
-                  />
-                  <img
-                    className="banner-animate-img banner-animate-img-3 top_image_bounce"
-                    src="assets/img/banner-2/2.png"
-                    alt="img"
-                  />
-                  <img
-                    className="main-img"
-                    src="assets/img/banner-2/1.png"
-                    alt="img"
-                  />
-                </div>
+            
+            {/* Contact Button - positioned at bottom */}
+            <div className="absolute right-[45%] bottom-[-50px] text-center text-white pb-8">
+              <div className="">
+                <button
+                  onClick={openForm}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-lg text-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                >
+                  Liên Hệ Ngay
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ================== BannerTwo End ==================*/}
-      <ModalVideo
-        channel="youtube"
-        autoplay
-        isOpen={isOpen}
-        videoId="XM6kTQPzzpQ"
-        onClose={() => setOpen(false)}
-      />
+      {/* Contact Form Modal */}
+      <BasicInfoForm isOpen={isFormOpen} onClose={closeForm} />
     </>
   );
 };

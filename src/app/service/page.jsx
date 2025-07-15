@@ -9,7 +9,7 @@ import ServiceAreaGroup from "@/components/ServiceAreaGroup";
 
 
 export const metadata = {
-  title: "Service || AglieTech - IT Solutions & Technology NEXT JS Template",
+  title: "Service || PromoGame ",
   description:
     "PromoGame provide you to build the best agency, app, business, digital, it services, it solutions, network solution, startup, technology, technology company, technology service template.",
 };

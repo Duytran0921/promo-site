@@ -84,8 +84,8 @@ const NavbarThree = () => {
             </button>
           </div>
           <div className="logo">
-            <Link href="/index-1">
-              <img src="assets/img/PromoLogo.png" alt="img" />
+            <Link href="/">
+              <img src="/assets/img/PromoLogo.png" alt="img" />
             </Link>
           </div>
           <div className="nav-right-part nav-right-part-mobile">

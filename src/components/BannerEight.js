@@ -11,7 +11,7 @@ const BannerEight = () => {
       {/* ================== Banner Start ==================*/}
       <div
         className="banner-area bg-relative banner-area-2 bg-cover mt-0"
-        style={{ backgroundImage: 'url("./assets/img/home-7/1.png")' }}
+        style={{ backgroundImage: 'url("/assets/img/home-7/1.png")' }}
       >
         <div className="container">
           <div className="row">

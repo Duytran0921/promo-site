@@ -82,3 +82,33 @@
     animation-fill-mode: both;
   }
 }
+
+// Fix spacing between navbar and breadcrumb
+.breadcrumb-area {
+  padding-top: 140px !important; // Giảm từ 222px xuống 140px
+  margin-top: -80px !important;  // Điều chỉnh margin-top từ -120px thành -80px
+}
+
+// Remove underline from all links
+a {
+  text-decoration: none !important;
+}
+
+a:hover,
+a:focus,
+a:active,
+a:visited {
+  text-decoration: none !important;
+}
+
+// Smooth scrolling for anchor links
+html {
+  scroll-behavior: smooth;
+}
+
+// Add padding-top to anchor sections to account for fixed navbar
+[id^="saas-package"],
+[id^="customize-package"],
+[id^="enterprise-package"] {
+  scroll-margin-top: 100px; /* Adjust based on navbar height */
+}

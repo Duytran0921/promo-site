@@ -5,7 +5,7 @@ const FaqAreaOne = () => {
     <>
       {/*==================== Faq area start ====================*/}
       <div className='faq-area faq-area-margin-top bg-cover pt-[90px] pb-[50px]'>
-        <div className='container mx-auto px-4'>
+        <div className='container p-0 w-full'>
           <div className='flex flex-wrap mb-8'>
             <div
               className='w-full lg:w-1/2 xl:w-7/12 h-[200px] bg-white/20 backdrop-blur-sm rounded-lg p-2'
@@ -21,14 +21,14 @@ const FaqAreaOne = () => {
               </div>
             </div>
           </div>
-          <div className='flex flex-wrap relative overflow-hidden h-[600px] rounded-lg shadow-xl'>
+          <div className='flex flex-wrap relative overflow-hidden h-[600px] rounded-lg p-0 shadow-xl'>
             <video
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
-                width: '100%',
-                height: '100%',
+                width: '1920',
+                height: '1080',
                 objectFit: 'cover',
                 zIndex: -1
               }}

@@ -1,0 +1,173 @@
+'use client';
+import React, { useRef, useEffect, useState } from 'react';
+import { useRive, useStateMachineInput } from '@rive-app/react-canvas';
+
+const SaasPackageRive = ({ className = '', width = '1920px', height = '500px' }) => {
+  const [riveInstance, setRiveInstance] = useState(null);
+  
+  // ViewModels và instances từ Rive
+  // const viewModels = {
+  //   Product: {
+  //     id: '0-586',
+  //     properties: {
+  //       State: { id: '0-760', type: 'string' },
+  //       open: { id: '0-693', type: 'boolean' }
+  //     },
+  //     instances: {
+  //       'Instance 1': {
+  //         id: '0-652',
+  //         State: 'Initial value',
+  //         open: false
+  //       },
+  //       'Instance': {
+  //         id: '0-587', 
+  //         State: 'Initial value',
+  //         open: false
+  //       }
+  //     }
+  //   },
+  //   ProductPackage: {
+  //     id: '0-530',
+  //     properties: {
+  //       textHover: { id: '0-1078', type: 'boolean' },
+  //       ProductCard_2: { id: '0-583', type: 'viewModel', referencedViewModel: 'productCard' },
+  //       ProductCard_1: { id: '0-569', type: 'viewModel', referencedViewModel: 'productCard' }
+  //     },
+  //     instances: {
+  //       'Instance': {
+  //         id: '0-531',
+  //         textHover: false
+  //       }
+  //     }
+  //   },
+  //   Button: {
+  //     id: '0-540',
+  //     properties: {
+  //       colorFeather: { id: '0-547', type: 'color' },
+  //       colorMain: { id: '0-544', type: 'color' },
+  //       Label: { id: '0-542', type: 'string' }
+  //     },
+  //     instances: {
+  //       'yellow': {
+  //         id: '0-577',
+  //         Label: 'XEM THÊM'
+  //       },
+  //       'blue': {
+  //         id: '0-573',
+  //         Label: 'XEM THÊM'
+  //       },
+  //       'Instance': {
+  //         id: '0-541',
+  //         Label: 'XEM THÊM'
+  //       }
+  //     }
+  //   },
+  //   productCard: {
+  //     id: '0-522',
+  //     properties: {
+  //       'property of Product': { id: '0-648', type: 'viewModel', referencedViewModel: 'Product' },
+  //       Main: { id: '0-526', type: 'string' },
+  //       Header: { id: '0-524', type: 'string' }
+  //     },
+  //     instances: {
+  //       'Custom': {
+  //         id: '0-537',
+  //         Header: 'CUSTOMIZE PACKAGE',
+  //         Main: 'Gói Customize từ PromoGame là giải pháp linh hoạt dành cho doanh nghiệp có yêu cầu đặc biệt về Gameplay, hành trình người dùng, giao diện hoặc tích hợp hệ thống.'
+  //       },
+  //       'SaaS': {
+  //         id: '0-534',
+  //         Header: 'SAAS PACKAGE',
+  //         Main: 'Gói giải pháp đóng gói SaaS cho phép doanh nghiệp tích hợp nền tảng gamified dưới thương hiệu riêng của mình.'
+  //       },
+  //       'Instance': {
+  //         id: '0-523',
+  //         Header: 'SAAS PACKAGE',
+  //         Main: 'Gói giải pháp đóng gói SaaS cho phép doanh nghiệp tích hợp nền tảng gamified dưới thương hiệu riêng của mình.'
+  //       }
+  //     }
+  //   }
+  // };
+
+  const { rive, RiveComponent } = useRive({
+    src: '/assets/animation/SaasPackage-test.riv',
+    stateMachines: 'State Machine 1',
+    autoplay: true,
+    onLoad: () => {
+      console.log('Rive animation loaded with ViewModels:', viewModels);
+    },
+    onStateChange: (event) => {
+      console.log('State changed:', event);
+    }
+  });
+
+   // Get the default instance of the view model
+  const viewModel = useViewModel(rive, { name: 'Product' });
+  const viewModelInstance = useViewModelInstance(viewModel, { rive });
+
+  useEffect(() => {
+    if (rive) {
+      setRiveInstance(rive);
+      // Có thể set các giá trị mặc định cho ViewModels ở đây
+      console.log('Available ViewModels:', Object.keys(viewModels));
+    }
+  }, [rive]);
+
+  // Hàm helper để cập nhật ViewModel instances
+  const updateViewModelInstance = (viewModelName, instanceName, propertyName, value) => {
+    if (viewModels[viewModelName]?.instances[instanceName]) {
+      viewModels[viewModelName].instances[instanceName][propertyName] = value;
+      console.log(`Updated ${viewModelName}.${instanceName}.${propertyName} to:`, value);
+    }
+  };
+
+  // Hàm để trigger các state machine inputs
+  const handleTextHover = (isHovering) => {
+    if (textHoverInput) {
+      textHoverInput.value = isHovering;
+      updateViewModelInstance('ProductPackage', 'Instance', isHovering);
+    }
+  };
+
+  const handleProductOpen = (isOpen) => {
+    if (openInput) {
+      openInput.value = isOpen;
+      updateViewModelInstance('Product', 'Instance 1', 'open', isOpen);
+    }
+  };
+
+  return (
+    <div 
+      className={className} 
+      style={{ width, height }}
+      onMouseEnter={() => handleTextHover(true)}
+      onMouseLeave={() => handleTextHover(false)}
+      onClick={() => handleProductOpen(true)}
+    >
+      <RiveComponent />
+      
+      {/* Debug info - có thể xóa trong production */}
+      {/* {process.env.NODE_ENV === 'development' && (
+        <div style={{ 
+          position: 'absolute', 
+          top: '10px', 
+          left: '10px', 
+          background: 'rgba(0,0,0,0.7)', 
+          color: 'white', 
+          padding: '10px', 
+          fontSize: '12px',
+          borderRadius: '4px',
+          maxWidth: '300px'
+        }}>
+          <h4>ViewModels Debug:</h4>
+          <p>Product instances: {Object.keys(viewModels.Product.instances).length}</p>
+          <p>ProductCard instances: {Object.keys(viewModels.productCard.instances).length}</p>
+          <p>Button instances: {Object.keys(viewModels.Button.instances).length}</p>
+          <p>Hover to trigger textHover, Click to trigger open</p>
+        </div>
+      )} */}
+    </div>
+  );
+};
+
+export default SaasPackageRive; 

@@ -9,6 +9,7 @@ const BannerOne = () => {
     const r = new rive.Rive({
       src: "/assets/animation/cover_website.riv",
       canvas: canvasRef.current,
+      stateMachines: "State Machine 1",
       autoplay: true,
       onLoad: () => {
         r.resizeDrawingSurfaceToCanvas();
@@ -18,7 +19,7 @@ const BannerOne = () => {
   }, []);
 
   return (
-    <div style={{ width: "100%", minHeight: 500, display: "flex", justifyContent: "center", alignItems: "center", background: "#000" }}>
+    <div style={{ width: "100%", minHeight: 500, display: "flex", justifyContent: "center", alignItems: "center", background: "#ffffff" }}>
       <canvas ref={canvasRef} width={1920} height={810} style={{ maxWidth: "100%", height: "auto" }} />
     </div>
   );
