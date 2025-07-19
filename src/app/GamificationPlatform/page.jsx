@@ -62,8 +62,9 @@ const page = () => {
       </div>
 
       {/* About Area Two */}
+      <div id="saas-package">
       <SaasPackage />
-
+      </div>
 
       {/* Customize Package Section */}
       <div id="saas-pricing">

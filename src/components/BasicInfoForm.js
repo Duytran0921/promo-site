@@ -56,8 +56,8 @@ const BasicInfoForm = ({ isOpen, onClose }) => {
       phone: '',
       company: '',
       industry: '',
-      customIndustry: '',
-      position: '',
+      // customIndustry: '',
+      // position: '',
       email: '',
       requirements: '',
       requirementDetails: ''
@@ -155,7 +155,7 @@ const BasicInfoForm = ({ isOpen, onClose }) => {
           </div>
 
           {/* Ngành nghề */}
-          <div>
+          {/* <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
               <FaBriefcase className="mr-2 text-blue-600" />
               Ngành nghề *
@@ -176,10 +176,10 @@ const BasicInfoForm = ({ isOpen, onClose }) => {
                 ))}
               </select>
               <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-            </div>
+            </div> */}
             
             {/* Custom industry input */}
-            {formData.industry === 'Khác' && (
+            {/* {formData.industry === 'Khác' && (
               <input
                 type="text"
                 name="customIndustry"
@@ -190,10 +190,10 @@ const BasicInfoForm = ({ isOpen, onClose }) => {
                 placeholder="Vui lòng nhập ngành nghề của bạn"
               />
             )}
-          </div>
+          </div> */}
 
           {/* Chức vụ */}
-          <div>
+          {/* <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
               <FaBriefcase className="mr-2 text-blue-600" />
               Chức vụ *
@@ -207,7 +207,7 @@ const BasicInfoForm = ({ isOpen, onClose }) => {
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors duration-200 text-sm"
               placeholder="Nhập chức vụ của bạn"
             />
-          </div>
+          </div> */}
 
           {/* Email công ty */}
           <div>
