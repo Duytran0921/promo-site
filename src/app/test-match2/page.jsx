@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { 
   useRive, 
   useViewModel,
@@ -9,8 +9,51 @@ import {
   useViewModelInstanceBoolean,
   useViewModelInstanceColor,
   useViewModelInstanceTrigger,
+  Layout,
+  Fit,
+  Alignment,
 } from '@rive-app/react-webgl2';
 import { useMatch2Game } from './useMatch2Game';
+
+// Background Rive Component
+const Match2Background = React.memo(({ isGameWon }) => {
+  const { rive, RiveComponent } = useRive({
+    src: '/assets/animation/match_2_bg.riv',
+    stateMachines: ['State Machine 1'],
+    layout : new Layout({
+      fit: Fit.Cover,
+      alignment: Alignment.Center,
+    }),
+    autoplay: true,
+
+    onLoad: () => console.log('Match 2 Background Rive loaded'),
+  });
+
+  // Kết nối với viewmodel "gameBG"
+  const gameBGViewModel = useViewModel(rive, { name: 'gameBG' });
+  const gameBGInstance = useViewModelInstance(gameBGViewModel, { useNew: true, rive });
+  
+  // Truyền isGameWon vào Rive
+  const { setValue: setGameWon } = useViewModelInstanceBoolean('isGameWon', gameBGInstance);
+  
+  // Đồng bộ isGameWon từ React state vào Rive
+  React.useEffect(() => {
+    if (isGameWon !== undefined && setGameWon) {
+      setGameWon(isGameWon);
+    }
+  }, [isGameWon, setGameWon]);
+
+  return (
+    <div className="absolute inset-0 w-full h-full overflow-hidden rounded-lg pointer-events-none">
+      {RiveComponent && (
+        <RiveComponent 
+        />
+      )}
+    </div>
+  );
+});
+
+Match2Background.displayName = 'Match2Background';
 
 // Dynamic Card Component
 const DynamicCard = React.memo(({ cardIndex, onValueChange, onOpenChange, mode = 'display', cardState = {}, isGameStarted = false, cardStates = {} }) => {
@@ -18,6 +61,7 @@ const DynamicCard = React.memo(({ cardIndex, onValueChange, onOpenChange, mode =
     src: '/assets/animation/match_2_card.riv',
     stateMachines: ['State Machine 1'],
     autoplay: true,
+    fit: 'contain',
     onLoad: () => console.log(`Match 2 Card Rive ${cardIndex} loaded`),
   });
 
@@ -67,18 +111,6 @@ const DynamicCard = React.memo(({ cardIndex, onValueChange, onOpenChange, mode =
     }
   }, [cardValue, cardOpen, cardState.value, cardState.open, cardIndex, onValueChange, onOpenChange, initialized]);
 
-  const borderColors = [
-    'border-purple-300', 'border-green-300', 'border-yellow-300', 'border-pink-300',
-    'border-blue-300', 'border-red-300', 'border-indigo-300', 'border-orange-300',
-    'border-teal-300', 'border-cyan-300', 'border-lime-300', 'border-rose-300'
-  ];
-  
-  const bgColors = [
-    'bg-purple-50', 'bg-green-50', 'bg-yellow-50', 'bg-pink-50',
-    'bg-blue-50', 'bg-red-50', 'bg-indigo-50', 'bg-orange-50',
-    'bg-teal-50', 'bg-cyan-50', 'bg-lime-50', 'bg-rose-50'
-  ];
-
   // Handle value changes - chỉ cập nhật external state (single source of truth)
   const handleValueChange = React.useCallback((newValue) => {
     if (onValueChange) {
@@ -109,7 +141,7 @@ const DynamicCard = React.memo(({ cardIndex, onValueChange, onOpenChange, mode =
 
   if (mode === 'control') {
     return (
-      <div className={`flex items-center gap-1 p-1 ${bgColors[cardIndex % bgColors.length]} rounded text-xs`}>
+      <div className={`flex items-center gap-1 p-1 rounded text-xs`}>
         <span className="font-medium w-8">C{cardIndex + 1}:</span>
         <input
           type="number"
@@ -129,8 +161,11 @@ const DynamicCard = React.memo(({ cardIndex, onValueChange, onOpenChange, mode =
 
   return (
     <div 
-      className={`border ${borderColors[cardIndex % borderColors.length]} rounded flex items-center justify-center bg-white relative cursor-pointer`}
-      style={{ width: '153px', height: '226px' }}
+      className={`flex items-center justify-center relative cursor-pointer overflow-hidden rounded-lg`}
+      style={{ 
+        width: '100%',
+        height: '100%'
+      }}
       onClick={() => {
         // Ngăn click khi game chưa bắt đầu
         if (!isGameStarted) return;
@@ -146,9 +181,10 @@ const DynamicCard = React.memo(({ cardIndex, onValueChange, onOpenChange, mode =
       {RiveComponent && (
         <RiveComponent 
           style={{ 
-            width: '153px', 
-            height: '226px', 
-            display: 'block' 
+            width: '100%', 
+            height: '100%', 
+            display: 'block',
+            objectFit: 'contain'
           }} 
         />
       )}
@@ -174,9 +210,16 @@ const TestMatch2Page = () => {
     totalCards,
     cardIndices,
     
+    // Random value configuration
+    minValue,
+    maxValue,
+    setMinValue,
+    setMaxValue,
+    
     // Game state
     cardStates,
     isGameStarted,
+    isGameWon,   
     twoCardOpen,
     
     // Card handlers
@@ -194,9 +237,19 @@ const TestMatch2Page = () => {
     resetAllValues,
     
     // Debug
-    copyDebugData
+    copyDebugData,
+    
+    // Auto-pause function
+    resetAutoPauseTimer
   } = useMatch2Game(2, 2);
 
+  
+  // Handle pointer enter để reset auto-pause timer
+  const handlePointerEnter = useCallback(() => {
+    if (isGameStarted) {
+      resetAutoPauseTimer();
+    }
+  }, [isGameStarted, resetAutoPauseTimer]);
 
   return (
     <div className="min-h-screen">
@@ -204,29 +257,47 @@ const TestMatch2Page = () => {
        <div className="flex flex-col gap-4 w-full p-4">
 
 
-         {/* Match-2 Game Container - Dynamic Layout */}
+         {/* Match-2 Game Container - Optimized Responsive Design */}
           <div 
-            className="w-full border-2 border-red-500 rounded-lg p-3 bg-gray-100 flex flex-col items-center"
+            className="w-full py-20 bg-gray-100 flex flex-col items-center relative overflow-hidden"
+            onPointerEnter={handlePointerEnter}
           >
-           <h3 className="text-base font-bold mb-2 text-center">Match-2 Game ({rows}x{cols})</h3>
-           <div 
-             className="grid gap-2"
-             style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-           >
-             {cardIndices.map((cardIndex) => (
-               <DynamicCard
-                 key={cardIndex}
-                 cardIndex={cardIndex}
-                 onValueChange={handleCardValueChange}
-                 onOpenChange={handleCardOpenChange}
-                 cardState={cardStates[cardIndex] || {}}
-                 isGameStarted={isGameStarted}
-                 cardStates={cardStates}
-               />
-             ))}
+           {/* Rive Background với isGameWon */}
+           <Match2Background isGameWon={isGameWon} />
+           
+           {/* Content Layer */}
+           <div className="relative z-10 w-full flex flex-col items-center">
+            
+             <div className="w-full max-w-6xl mx-auto flex items-center justify-center">
+               <div 
+                 className="grid gap-1"
+                 style={{ 
+                   gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                   gridTemplateRows: `repeat(${rows}, 1fr)`,
+                   width: `${120 * cols + 4 * (cols - 1)}px`,
+                   height: `${160 * rows + 4 * (rows - 1)}px`,
+                   maxWidth: '90vw',
+                   maxHeight: '80vh'
+                 }}
+               >
+                 {cardIndices.map((cardIndex) => (
+                   <DynamicCard
+                     key={cardIndex}
+                     cardIndex={cardIndex}
+                     onValueChange={handleCardValueChange}
+                     onOpenChange={handleCardOpenChange}
+                     cardState={cardStates[cardIndex] || {}}
+                     isGameStarted={isGameStarted}
+                     cardStates={cardStates}
+                   />
+                 ))}
+               </div>
+             </div>
            </div>
+           
+           {/* Rive Foreground với isGameWon và gameStarted */}
+           <Match2Foreground isGameWon={isGameWon} gameStarted={isGameStarted} />
            </div>
-         </div>
         
         {/* Control Panel - Dynamic */}
          <div className="w-full border-2 border-blue-500 rounded-lg bg-blue-50">
@@ -246,7 +317,7 @@ const TestMatch2Page = () => {
                </button>
              </div>
              {/* Grid Configuration */}
-             <div className="flex items-center gap-4 text-xs">
+             <div className="flex items-center gap-4 text-xs flex-wrap">
                <div className="flex items-center gap-2">
                  <label className="font-medium">Rows:</label>
                  <input
@@ -269,8 +340,40 @@ const TestMatch2Page = () => {
                    className="w-12 p-1 border border-gray-300 rounded"
                  />
                </div>
+               <div className="flex items-center gap-2">
+                 <label className="font-medium">Min:</label>
+                 <input
+                   type="number"
+                   min="1"
+                   max="100"
+                   value={minValue}
+                   onChange={(e) => {
+                     const newMin = Number(e.target.value);
+                     if (newMin <= maxValue) {
+                       setMinValue(newMin);
+                     }
+                   }}
+                   className="w-12 p-1 border border-gray-300 rounded"
+                 />
+               </div>
+               <div className="flex items-center gap-2">
+                 <label className="font-medium">Max:</label>
+                 <input
+                   type="number"
+                   min="1"
+                   max="100"
+                   value={maxValue}
+                   onChange={(e) => {
+                     const newMax = Number(e.target.value);
+                     if (newMax >= minValue) {
+                       setMaxValue(newMax);
+                     }
+                   }}
+                   className="w-12 p-1 border border-gray-300 rounded"
+                 />
+               </div>
                <div className="text-gray-600">
-                 Total Cards: {totalCards}
+                 Total Cards: {totalCards} | Range: {minValue}-{maxValue}
                </div>
              </div>
            </div>
@@ -279,21 +382,30 @@ const TestMatch2Page = () => {
            <div className="p-2">
            
            {/* Individual Card Controls - Dynamic Grid */}
-           <div 
-             className="grid gap-2 mb-3"
-             style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-           >
+           <div className="w-full max-w-6xl mx-auto flex items-center justify-center mb-3">
+             <div 
+               className="grid gap-2"
+               style={{ 
+                 gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                 gridTemplateRows: `repeat(${rows}, 1fr)`,
+                 width: `${120 * cols + 8 * (cols - 1)}px`,
+                 height: `${50 * rows + 8 * (rows - 1)}px`,
+                 maxWidth: '90vw'
+               }}
+             >
              {cardIndices.map((cardIndex) => (
-               <DynamicCard
-                 key={`control-${cardIndex}`}
-                 cardIndex={cardIndex}
-                 onValueChange={handleCardValueChange}
-                 onOpenChange={handleCardOpenChange}
-                 mode="control"
-                 cardState={cardStates[cardIndex] || {}}
-               />
-             ))}
+                 <DynamicCard
+                   key={`control-${cardIndex}`}
+                   cardIndex={cardIndex}
+                   onValueChange={handleCardValueChange}
+                   onOpenChange={handleCardOpenChange}
+                   mode="control"
+                   cardState={cardStates[cardIndex] || {}}
+                 />
+               ))}
+             </div>
            </div>
+         </div>
          </div>
          
          {/* Quick Actions */}
@@ -347,6 +459,7 @@ const TestMatch2Page = () => {
                <div className="flex items-center gap-4 flex-wrap">
                  <span>Two-Card Open: <span className={`font-bold ${twoCardOpen ? 'text-green-600' : 'text-red-600'}`}>{twoCardOpen ? 'TRUE' : 'FALSE'}</span></span>
                  <span>Game Started: <span className={`font-bold ${isGameStarted ? 'text-green-600' : 'text-red-600'}`}>{isGameStarted ? 'TRUE' : 'FALSE'}</span></span>
+                 <span>Game Won: <span className={`font-bold ${isGameWon ? 'text-green-600' : 'text-red-600'}`}>{isGameWon ? 'TRUE' : 'FALSE'}</span></span>
                  <span>Game Started (Rive): <span className={`font-bold ${isGameStarted ? 'text-green-600' : 'text-red-600'}`}>{isGameStarted ? 'TRUE' : 'FALSE'}</span></span>
                  <span>Matched Cards: <span className="font-bold text-blue-600">{Object.values(cardStates).filter(state => state.matched).length}</span></span>
                  <span>Total Pairs: <span className="font-bold text-purple-600">{Math.floor(totalCards / 2)}</span></span>
@@ -374,3 +487,51 @@ const TestMatch2Page = () => {
 };
 
 export default TestMatch2Page;
+
+// Foreground Rive Component
+const Match2Foreground = React.memo(({ isGameWon, gameStarted }) => {
+  const { rive, RiveComponent } = useRive({
+    src: '/assets/animation/match_2_fg.riv',
+    stateMachines: ['State Machine 1'],
+    layout: new Layout({
+      fit:Fit.Layout,
+    }),
+    autoplay: true,
+    // fit: 'cover',
+    onLoad: () => console.log('Match 2 Foreground Rive loaded'),
+  });
+
+  // Kết nối với viewmodel "gameFG"
+  const gameFGViewModel = useViewModel(rive, { name: 'gameFG' });
+  const gameFGInstance = useViewModelInstance(gameFGViewModel, { useNew: true, rive });
+  
+  // Truyền isGameWon và gameStarted vào Rive
+  const { setValue: setGameWon } = useViewModelInstanceBoolean('isGameWon', gameFGInstance);
+  const { setValue: setGameStarted } = useViewModelInstanceBoolean('gameStarted', gameFGInstance);
+  
+  // Đồng bộ isGameWon từ React state vào Rive
+  React.useEffect(() => {
+    if (isGameWon !== undefined && setGameWon) {
+      setGameWon(isGameWon);
+    }
+  }, [isGameWon, setGameWon]);
+  
+  // Đồng bộ gameStarted từ React state vào Rive
+  React.useEffect(() => {
+    if (gameStarted !== undefined && setGameStarted) {
+      setGameStarted(gameStarted);
+    }
+  }, [gameStarted, setGameStarted]);
+
+  return (
+    <div className="absolute inset-0 w-full h-full overflow-hidden rounded-lg pointer-events-none z-20" style={{ left: 0, right: 0, top: 0, bottom: 0 }}>
+      {RiveComponent && (
+        <RiveComponent 
+          
+        />
+      )}
+    </div>
+  );
+});
+
+Match2Foreground.displayName = 'Match2Foreground';
