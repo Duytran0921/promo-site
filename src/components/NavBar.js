@@ -1,282 +1,216 @@
-'use client'
-import React, { useEffect, useState } from 'react';
-import { FaSearch } from 'react-icons/fa';
-import Link from 'next/link';
+'use client';
+import React, { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { 
+  useRive, 
+  useViewModel,
+  useViewModelInstance,
+  useViewModelInstanceString,
+  useViewModelInstanceNumber,
+  useViewModelInstanceBoolean,
+  useViewModelInstanceColor,
+  useViewModelInstanceTrigger,
+  Layout,
+  Fit,
+  Alignment
+} from '@rive-app/react-webgl2';
+
+function normalizePath(path) {
+  if (!path) return '/';
+  // Bỏ dấu / cuối (trừ trường hợp chỉ là '/')
+  return path.endsWith('/') && path !== '/' ? path.slice(0, -1) : path;
+}
 
 const NavBar = () => {
-  const [active, setActive] = useState(false);
-  const [searchShow, setSearchShow] = useState(false);
-  const menuActive = () => {
-    setActive(!active);
-  };
-  const searchActive = () => {
-    setSearchShow(!searchShow);
-  };
+  const router = useRouter();
+  const pathname = usePathname();
+  
+  // Bước 1: Load Rive animation với useRive hook
+  const { rive, RiveComponent } = useRive({
+    src: '/assets/animation/navbarN.riv', // File .riv
+    autoplay: true, // Tự play khi load
+    stateMachines: ['State Machine 1'], // Kiểm tra tên chính xác trong Rive Editor
+    layout : new Layout({
+      fit: Fit.Contain,
+      alignment: Alignment.Center,
+    }),
+    autoBind: false, // Manual bind để kiểm soát
+    onLoad: () => console.log('Rive loaded'), // Debug load
+  });
 
-  // Control sidebar navigation
+  // Bước 2: Lấy ViewModels để inspect cấu trúc
+  const vmPNavBar = useViewModel(rive, { name: 'NavBar' });
+  // console.log('NavBar Properties:', vmPPackage?.properties);
+
+  const vm = useViewModel(rive, { name: 'Item' });
+//   console.log('productCard Properties:', vmCardModel?.properties);
+
+//   const vmProduct = useViewModel(rive, { name: 'Product' });
+//   console.log('Product Properties:', vmProduct?.properties);
+
+//   const vmButton = useViewModel(rive, { name: 'Button' });
+//   console.log('Button Properties:', vmButton?.properties);
+
+  // Bước 3: Tạo top-level instance
+  const vmNavBarInstance = useViewModelInstance(vmPNavBar, { rive });
+
+  // Bước 4: Property hooks at top-level để set values
+  const { setValue: setItem1Label } = useViewModelInstanceString('itemHome/Label', vmNavBarInstance);
+  const { setValue: setItem2Label } = useViewModelInstanceString('itemGPP/Label', vmNavBarInstance);
+  const { setValue: setItem3Label } = useViewModelInstanceString('itemServices/Label', vmNavBarInstance);
+  const { setValue: setItem4Label } = useViewModelInstanceString('gameLab/Label', vmNavBarInstance);
+
+//   const { setValue: setCard1ButtonColorMain } = useViewModelInstanceColor('ProductCard_1/property of Button/colorMain', vmPPackageInstance);
+//   const { setValue: setCard1ProductState } = useViewModelInstanceString('ProductCard_1/property of Product/State', vmPPackageInstance);
+  const { setValue: setItem1Active } = useViewModelInstanceBoolean('itemHome/active', vmNavBarInstance);
+  const { setValue: setItem2Active } = useViewModelInstanceBoolean('itemGPP/active', vmNavBarInstance);
+  const { setValue: setItem3Active } = useViewModelInstanceBoolean('itemServices/active', vmNavBarInstance);
+  const { setValue: setItem4Active } = useViewModelInstanceBoolean('gameLab/active', vmNavBarInstance);
+
+
+//   const { setValue: setCard2Header } = useViewModelInstanceString('ProductCard_2/Header', vmPPackageInstance);
+//   const { setValue: setCard2Main } = useViewModelInstanceString('ProductCard_2/Main', vmPPackageInstance);
+//   const { setValue: setCard2ButtonLabel } = useViewModelInstanceString('ProductCard_2/property of Button/Label', vmPPackageInstance);
+//   const { setValue: setCard2ButtonColorMain } = useViewModelInstanceColor('ProductCard_2/property of Button/colorMain', vmPPackageInstance);
+//   const { setValue: setCard2ProductState } = useViewModelInstanceString('ProductCard_2/property of Product/State', vmPPackageInstance);
+//   const { setValue: setCard2ProductOpen } = useViewModelInstanceBoolean('ProductCard_2/property of Product/open', vmPPackageInstance);
+
+  // Bước 5: Trigger hooks with onTrigger để cuộn trang (KHÔNG set active ở đây nữa)
+  useViewModelInstanceTrigger('itemHome/itemTrigger', vmNavBarInstance, {
+    onTrigger: () => {
+      router.push('/');
+    },
+  });
+
+  useViewModelInstanceTrigger('itemGPP/itemTrigger', vmNavBarInstance, {
+    onTrigger: () => {
+      router.push('/GamificationPlatform/');
+    },
+  });
+
+  useViewModelInstanceTrigger('itemServices/itemTrigger', vmNavBarInstance, {
+    onTrigger: () => {
+      router.push('/Services/');
+    },
+  });
+
+  useViewModelInstanceTrigger('gameLab/itemTrigger', vmNavBarInstance, {
+    onTrigger: () => {
+      router.push('/test-match2');
+    },
+  });
+
+//   useViewModelInstanceTrigger('ProductCard_2/property of Button/btnTrigger', vmPPackageInstance, {
+//     onTrigger: () => {
+//       console.log('Card2 Button Triggered! Scrolling to section-basic');
+//       const section = document.getElementById('custom-pricing');
+//       if (section) {
+//         section.scrollIntoView({ behavior: 'smooth' });
+//       } else {
+//         console.warn('Section #section-basic not found, fallback to 1000px');
+//         window.scrollTo({ top: 1000, behavior: 'smooth' });
+//       }
+//     },
+//   });
+
+//   // Ref cho animation loop
+//   const animationFrameId = useRef(null);
+
+  // Bước 6: Logic bind, set trong useEffect
   useEffect(() => {
-    const items = document.querySelectorAll('.menu-item-has-children > a');
+    if (!rive || !vmNavBarInstance) return;
 
-    const handleClick = (event) => {
-      const href = event.currentTarget.getAttribute('href');
-      
-      // Only prevent default if href is # (placeholder link)
-      if (href === '#') {
-        event.preventDefault();
-      }
-      
-      const subMenu = event.currentTarget.parentElement.querySelector('.sub-menu');
-      if (subMenu) {
-        subMenu.classList.toggle('active');
-        event.currentTarget.classList.toggle('open');
-      }
-    };
+    // Debug state machines/artboard
+    console.log('Rive State Machines:', rive.stateMachines);
+    console.log('Rive Default Artboard:', rive.defaultArtboard);
 
-    items.forEach(item => {
-      item.addEventListener('click', handleClick);
-    });
+    // Lấy stateMachine/artboard
+    let stateMachine = null;
+    if (rive.stateMachines && rive.stateMachines.length > 0) {
+      stateMachine = rive.stateMachines[0];
+    } else {
+      console.warn('No state machines - fallback to artboard');
+    }
+    const artboard = rive.defaultArtboard;
 
-    // Cleanup function to remove event listeners
+    // Bind instance trước set
+    if (stateMachine) stateMachine.bindViewModelInstance(vmNavBarInstance);
+    else if (artboard) artboard.bindViewModelInstance(vmNavBarInstance);
+
+    // Set values sau bind
+    if (setItem1Label) setItem1Label('Home');
+    if (setItem2Label) setItem2Label('GP Platform');
+    if (setItem3Label) setItem3Label('Services');
+    if (setItem4Label) setItem4Label('Game Lab');
+
+//     if (setCard1Main) setCard1Main('Gói giải pháp đóng gói SaaS cho phép doanh nghiệp tích hợp nền tảng gamified dưới thương hiệu riêng của mình.');
+//     if (setCard1ButtonLabel) setCard1ButtonLabel('Xem Thêm');
+//     if (setCard1ButtonColorMain) setCard1ButtonColorMain(0xFF0000FF);
+//     if (setCard1ProductState) setCard1ProductState('Active');
+//     if (setCard1ProductOpen) setCard1ProductOpen(true);
+
+//     if (setCard2Header) setCard2Header('CUSTOMIZE PACKAGE');
+//     if (setCard2Main) setCard2Main('Gói Customize từ PromoGame là giải pháp linh hoạt dành cho doanh nghiệp có yêu cầu đặc biệt về Gameplay, hành trình người dùng, giao diện hoặc tích hợp hệ thống.');
+//     if (setCard2ButtonLabel) setCard2ButtonLabel('Xem Thêm');
+//     if (setCard2ButtonColorMain) setCard2ButtonColorMain(0xFFFF0000);
+//     if (setCard2ProductState) setCard2ProductState('Inactive');
+//     if (setCard2ProductOpen) setCard2ProductOpen(true);
+
+//     // Advance initial
+//     if (artboard) artboard.advance(0);
+//     if (stateMachine) stateMachine.advance(0);
+
+//     // Loop advance để apply liên tục
+//     let lastTime = performance.now();
+//     const animate = (time) => {
+//       const delta = (time - lastTime) / 1000;
+//       if (artboard) artboard.advance(delta);
+//       if (stateMachine) stateMachine.advance(delta);
+//       lastTime = time;
+//       animationFrameId.current = requestAnimationFrame(animate);
+//     };
+//     animationFrameId.current = requestAnimationFrame(animate);
+
+//     // Cleanup
     return () => {
-      items.forEach(item => {
-        item.removeEventListener('click', handleClick);
-      });
+      // if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+      if (stateMachine) stateMachine.unbindViewModelInstance(vmNavBarInstance);
+      else if (artboard) artboard.unbindViewModelInstance(vmNavBarInstance);
     };
-  }, []);
+  }, [rive, vmPNavBar, vmNavBarInstance, setItem1Label]);
 
+  // Set active property của Rive dựa vào pathname
+  useEffect(() => {
+    if (!vmNavBarInstance) return;
+    // Reset tất cả về false trước
+    if (setItem1Active) setItem1Active(false);
+    if (setItem2Active) setItem2Active(false);
+    if (setItem3Active) setItem3Active(false);
+    if (setItem4Active) setItem4Active(false);
+
+    const currentPath = normalizePath(pathname);
+
+    if (currentPath === '/') {
+      if (setItem1Active) setItem1Active(true);
+    } else if (currentPath === '/GamificationPlatform') {
+      if (setItem2Active) setItem2Active(true);
+    } else if (currentPath === '/Services') {
+      if (setItem3Active) setItem3Active(true);
+    } else if (currentPath === '/test-match2') {
+      if (setItem4Active) setItem4Active(true);
+    }
+  }, [pathname, vmNavBarInstance, setItem1Active, setItem2Active, setItem3Active, setItem4Active]);
+
+  // Render with style to ensure canvas size
   return (
-    <>
-      {/* search popup start*/}
-      <div
-        className={searchShow ? 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 opacity-100 visible' : 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 opacity-0 invisible'}
-        id="td-search-popup"
-      >
-        <form action="/" className="bg-transparent p-8 w-full max-w-md mx-4">
-          <div className="mb-4">
-            <input
-              type="text"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Search....."
-            />
-          </div>
-          <button type="submit" className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center">
-            <FaSearch />
-          </button>
-        </form>
+    <div className="fixed top-0 left-0 right-0 z-50 w-full">
+      <div className="w-full h-20">
+        <RiveComponent 
+          style={{ width: '100%', height: '100%', display: 'block' }} 
+        />
       </div>
-      {/* search popup end*/}
-      <div
-        onClick={searchActive}
-        className={searchShow ? 'fixed inset-0 z-40 bg-black bg-opacity-50 opacity-100 visible' : 'fixed inset-0 z-40 bg-black bg-opacity-50 opacity-0 invisible pointer-events-none'}
-        id="body-overlay"
-      ></div>
-      {/* navbar start */}
-      <nav className="bg-white shadow-md sticky top-0 z-30">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-4">
-            <div className="lg:hidden">
-              <button
-                onClick={menuActive}
-                className={
-                  active
-                    ? 'flex flex-col justify-center items-center w-8 h-8 space-y-1 transform transition-all duration-300 rotate-45'
-                    : 'flex flex-col justify-center items-center w-8 h-8 space-y-1 transform transition-all duration-300'
-                }
-                data-target="#itech_main_menu"
-                aria-expanded="false"
-                aria-label="Toggle navigation"
-              >
-                <span className={active ? 'w-6 h-0.5 bg-gray-800 transform rotate-90 translate-y-1.5' : 'w-6 h-0.5 bg-gray-800'} />
-                <span className={active ? 'w-6 h-0.5 bg-gray-800 transform -rotate-90 -translate-y-1.5' : 'w-6 h-0.5 bg-gray-800'} />
-              </button>
-            </div>
-            <div className="flex-shrink-0">
-              <Link href="/">
-                <img src="/assets/img/PromoLogo.png" alt="img" className="h-10 w-auto" />
-              </Link>
-            </div>
-            <div className="lg:hidden">
-              <span className="p-2 text-gray-600 hover:text-blue-600 cursor-pointer transition-colors duration-200" onClick={searchActive}>
-                <FaSearch className="w-5 h-5" />
-              </span>
-            </div>
-            <div
-              className={
-                active
-                  ? 'lg:flex lg:items-center lg:space-x-8 absolute lg:relative top-full lg:top-auto left-0 w-full lg:w-auto bg-white lg:bg-transparent  lg:shadow-none border-t lg:border-t-0 py-4 lg:py-0 px-4 lg:px-0 block'
-                  : 'lg:flex lg:items-center lg:space-x-8 absolute lg:relative top-full lg:top-auto left-0 w-full lg:w-auto bg-white lg:bg-transparent  lg:shadow-none border-t lg:border-t-0 py-4 lg:py-0 px-4 lg:px-0 hidden'
-              }
-              id="itech_main_menu"
-            >
-              <ul className="flex flex-col lg:flex-row lg:items-center lg:space-x-8 space-y-4 lg:space-y-0">
-                <li className="relative group">
-                  <Link href="/" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 flex items-center">
-                    Home
-                    <svg className="w-4 h-4 ml-1 transform group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </Link>
-                  <ul className="absolute top-full left-0 mt-2 w-48 bg-white shadow-lg rounded-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <li>
-                      {/* <Link href="/index-1" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">IT / Softwer Agency</Link> */}
-                    </li>
-                  </ul>
-                </li>
-                <li className="relative group">
-                  <Link href="/GamificationPlatform" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 flex items-center">
-                    Gamified Promotion Platform
-                    <svg className="w-4 h-4 ml-1 transform group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </Link>
-                  <ul className="absolute top-full left-0 mt-2 w-64 bg-white shadow-lg rounded-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <li>
-                      <Link href="/GamificationPlatform#saas-package" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">SaaS Package</Link>
-                    </li>
-                    <li>
-                      <Link href="/GamificationPlatform#customize-package" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Customize Package</Link>
-                    </li>
-                    <li>
-                      <Link href="/GamificationPlatform#enterprise-package" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Enterprise Package</Link>
-                    </li>
-                  </ul>
-                </li>
-                <li className="relative group">
-                  <Link href="#" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 flex items-center">
-                    Sản Phẩm
-                    <svg className="w-4 h-4 ml-1 transform group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </Link>
-                  <ul className="absolute top-full left-0 mt-2 w-48 bg-white shadow-lg rounded-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <li>
-                      {/* <Link href="/about" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">About Us</Link> */}
-                    </li>         
-                  </ul>
-                </li>
-                <li className="relative group">
-                  <Link href="#" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 flex items-center">
-                    Thư Viện Game
-                    <svg className="w-4 h-4 ml-1 transform group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </Link>
-                  <div className="absolute top-full left-0 mt-2 w-96 bg-white shadow-lg rounded-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="mb-4 lg:mb-0">
-                          <ul>
-                            <li>
-                              {/* <Link href="/index-1" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">IT / Softwer Agency</Link> */}
-                            </li>                  
-                          </ul>
-                        </div>
-                        {/* <div className="mb-4 lg:mb-0">
-                          <ul>
-                            <li>
-                              <Link href="/service" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Service 01</Link>
-                            </li>
-                            <li>
-                              <Link href="/service-2" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Service 02</Link>
-                            </li>
-                            <li>
-                              <Link href="/service-3" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Service 03</Link>
-                            </li>
-                            <li>
-                              <Link href="/service-4" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Service 04</Link>
-                            </li>
-                            <li>
-                              <Link href="/service-5" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Service 05</Link>
-                            </li>
-                            <li>
-                              <Link href="/service-details" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Service Single</Link>
-                            </li>
-                          </ul>
-                        </div>
-                        <div className="mb-4 lg:mb-0">
-                          <ul>
-                            <li>
-                              <Link href="/project" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Project 01</Link>
-                            </li>
-                            <li>
-                              <Link href="/project-2" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Project 02</Link>
-                            </li>
-                            <li>
-                              <Link href="/project-3" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Project 03</Link>
-                            </li>
-                            <li>
-                              <Link href="/project-details" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Case Study Details</Link>
-                            </li>
-                            <li>
-                              <Link href="/pricing" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Pricing 01</Link>
-                            </li>
-                            <li>
-                              <Link href="/pricing-2" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Pricing 02</Link>
-                            </li>
-                          </ul>
-                        </div>
-                        <div className="mb-4 lg:mb-0"> */}
-                          {/* <ul>
-                            <li>
-                              <Link href="/about" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">About Us</Link>
-                            </li>
-                            <li>
-                              <Link href="/team" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Team 01</Link>
-                            </li>
-                            <li>
-                              <Link href="/team-2" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Team 02</Link>
-                            </li>
-                            <li>
-                              <Link href="/team-3" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Team 03</Link>
-                            </li>
-                            <li>
-                              <Link href="/team-details" className="block px-2 py-1 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200 rounded">Team Details</Link>
-                            </li>
-                          </ul> */}
-                        {/* </div> */}
-                      </div>
-                    </div>
-                  </div>
-                </li>
-
-                <li className="relative group">
-                  <Link href="#" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 flex items-center">
-                    Blog
-                    <svg className="w-4 h-4 ml-1 transform group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </Link>
-                  <ul className="absolute top-full left-0 mt-2 w-48 bg-white shadow-lg rounded-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <li>
-                      {/* <Link href="/blog" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200">Blog 01</Link> */}
-                    </li>
-
-                  </ul>
-                </li>
-                <li>
-                  <Link href="/contact" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">Contact Us</Link>
-                </li>
-              </ul>
-            </div>
-            <div className="hidden lg:flex items-center">
-              <span className="p-2 text-gray-600 hover:text-blue-600 cursor-pointer transition-colors duration-200" onClick={searchActive}>
-                <FaSearch className="w-5 h-5" />
-              </span>
-              {/* <a className="flex items-center space-x-3 text-gray-700 hover:text-blue-600 transition-colors duration-200" href="tel:">
-                <span className="flex-shrink-0">
-                  <img src="assets/img/icon/1.png" alt="img" className="w-6 h-6" />
-                </span>
-                <div>
-                  <span className="text-sm text-gray-500">Need help?</span>
-                  <h5 className="font-semibold">(808) 555-0111</h5>
-                </div>
-              </a> */}
-            </div>
-          </div>
-        </div>
-      </nav>
-      {/* navbar end */}
-    </>
+    </div>
   );
 };
 

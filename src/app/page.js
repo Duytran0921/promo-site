@@ -7,6 +7,7 @@ import BannerOne from "@/components/BannerOne";
 import FaqAreaOne from "@/components/FaqAreaOne";
 import FooterOne from "@/components/FooterOne";
 import NavBar from "@/components/NavBar";
+// import NavBar from "@/components/NavBar00";
 // import PricingAreaOne from "@/components/PricingAreaOne";
 import ServiceAreaOne from "@/components/ServiceAreaOne";
 import TeamAreaOne from "@/components/TeamAreaOne";
@@ -24,7 +25,7 @@ const page = () => {
   return (
     <>
       {/* Navigation Bar */}
-      <NavBar />
+      <NavBar/>
 
       {/* Banner One */}
       <BannerOne />

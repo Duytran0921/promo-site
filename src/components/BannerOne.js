@@ -19,8 +19,8 @@ const BannerOne = () => {
   }, []);
 
   return (
-    <div style={{ width: "100%", minHeight: 500, display: "flex", justifyContent: "center", alignItems: "center", background: "#ffffff" }}>
-      <canvas ref={canvasRef} width={1920} height={810} style={{ maxWidth: "100%", height: "auto" }} />
+    <div className="w-full min-h-[500px] flex justify-center items-center bg-white mt-16">
+      <canvas ref={canvasRef} width={1920} height={810} className="max-w-full h-auto" />
     </div>
   );
 };

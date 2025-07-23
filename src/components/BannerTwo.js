@@ -18,7 +18,7 @@ const BannerTwo = () => {
     <>
       {/* ================== BannerTwo Start ==================*/}
       <div
-        className="relative bg-cover bg-center bg-no-repeat min-h-[300px] max-h-[600px] h-screen bg-[url('/assets/img/bg/banner2.png')]"
+        className="relative mt-16 bg-cover bg-center bg-no-repeat min-h-[300px] max-h-[600px] h-screen bg-[url('/assets/img/bg/banner2.png')]"
       >
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex flex-col justify-between py-8">
