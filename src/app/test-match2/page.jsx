@@ -103,7 +103,7 @@ const TestMatch2Page = () => {
           gameMode={gameMode}
         />
         
-        {/* Control Panel - Dynamic */}
+        Control Panel - Dynamic
         <ControlPanel
           totalCards={totalCards}
           isGameStarted={isGameStarted}

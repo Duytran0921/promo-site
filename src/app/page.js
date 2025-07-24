@@ -12,6 +12,7 @@ import NavBar from "@/components/NavBar";
 import ServiceAreaOne from "@/components/ServiceAreaOne";
 import TeamAreaOne from "@/components/TeamAreaOne";
 // import WorkProcessOne from "@/components/WorkProcessOne";
+import Match2GameBanner from "@/components/Match2GameBanner";
 
 
 export const metadata = {
@@ -27,8 +28,8 @@ const page = () => {
       {/* Navigation Bar */}
       <NavBar/>
 
-      {/* Banner One */}
-      <BannerOne />
+      {/* Match-2 Game Banner */}
+      <Match2GameBanner />
 
       {/* About Area One */}
       <AboutAreaOne />

@@ -71,6 +71,22 @@ export const hardConfig = {
   enablePointerEvents: true
 };
 
+export const bannerConfig = {
+  id: 'banner',
+  name: 'Banner Mode',
+  rows: 2,
+  cols: 5,
+  minValue: 1,
+  maxValue: 4,
+  autoPauseTimer: 8000, // 8 seconds
+  gameMode: 'normal',
+  timeUpDuration: 25000, // 25 seconds for timeUp mode
+  cardGap: 2,
+  autoStart: false,
+  showTimer: false, // No timer display in hard mode
+  enablePointerEvents: true
+};
+
 // TimeUp mode configs
 export const timeUpEasyConfig = {
   ...easyConfig,
@@ -102,6 +118,7 @@ export const gameConfigs = {
   easy: easyConfig,
   medium: mediumConfig,
   hard: hardConfig,
+  banner: bannerConfig,
   timeUpEasy: timeUpEasyConfig,
   timeUpMedium: timeUpMediumConfig,
   timeUpHard: timeUpHardConfig

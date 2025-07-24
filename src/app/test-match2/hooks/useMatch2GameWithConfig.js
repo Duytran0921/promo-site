@@ -1,6 +1,7 @@
 'use client';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { defaultConfig, validateGameConfig } from '../configs/gameConfig';
+import { useGameSession } from './useGameSession';
 
 /**
  * Enhanced version of useMatch2Game that accepts external configuration
@@ -41,6 +42,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
   const [hasInitialRandomized, setHasInitialRandomized] = useState(false);
   const [isGameWon, setIsGameWon] = useState(false);
   const [isGameLose, setIsGameLose] = useState(false);
+  const [gameRestartKey, setGameRestartKey] = useState(0); // Force regenerate cardIndices
   
   // TimeUp mode timer state
   const [timeUpTimer, setTimeUpTimer] = useState(0);
@@ -49,17 +51,61 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
   // Auto-pause timer ref
   const autoPauseTimerRef = useRef(null);
   
+  // Game session management
+  const {
+    currentSession,
+    isSessionActive,
+    startSession,
+    endSession,
+    trackClick,
+    trackMatch,
+    sessionHistory,
+    clearSessionHistory,
+    getSessionStats
+  } = useGameSession();
+  
   // Computed values
   const totalCards = rows * cols;
   const cardIndices = useMemo(() => {
+    console.log('🔄 cardIndices recalculated:', { rows, cols, totalCards, gameRestartKey });
     return Array.from({ length: totalCards }, (_, i) => i);
-  }, [totalCards]);
+  }, [totalCards, gameRestartKey]);
   
   // Tính toán trạng thái "two-card open" - true khi có đúng 2 card đang được mở (không bao gồm thẻ đã matched)
   const twoCardOpen = useMemo(() => {
     const openCards = Object.values(cardStates).filter(state => state.open && !state.matched);
     return openCards.length === 2;
   }, [cardStates]);
+  
+  // Tính toán trạng thái "two-card open but no match" - true khi có 2 thẻ mở nhưng không match
+  const twoCardOpenNoMatch = useMemo(() => {
+    if (!twoCardOpen) return false;
+    
+    const openCards = Object.values(cardStates).filter(state => state.open && !state.matched);
+    if (openCards.length !== 2) return false;
+    
+    // Kiểm tra xem 2 thẻ mở có cùng giá trị không
+    const [card1, card2] = openCards;
+    return card1.value !== card2.value;
+  }, [cardStates, twoCardOpen]);
+  
+  // Tính toán trạng thái "two-card open and match" - true khi có 2 thẻ mở và match
+  const twoCardOpenAndMatch = useMemo(() => {
+    if (!twoCardOpen) return false;
+    
+    const openCards = Object.values(cardStates).filter(state => state.open && !state.matched);
+    if (openCards.length !== 2) return false;
+    
+    // Kiểm tra xem 2 thẻ mở có cùng giá trị không
+    const [card1, card2] = openCards;
+    return card1.value === card2.value;
+  }, [cardStates, twoCardOpen]);
+  
+  // Tính toán trạng thái animation trigger cho START/RESTART
+  const startRestartAnimation = useMemo(() => {
+    // Trigger animation khi game vừa bắt đầu hoặc restart
+    return isGameStarted && Object.values(cardStates).every(state => !state.open && !state.matched);
+  }, [isGameStarted, cardStates]);
   
   // Tính toán số card đã matched và tổng số cặp cần match
   const matchedCardsCount = useMemo(() => {
@@ -98,8 +144,8 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       clearTimeout(autoPauseTimerRef.current);
     }
     
-    // Chỉ set timer mới nếu game KHÔNG đang chạy (gameStarted = false) và không phải TimeUp mode
-    if (!isGameStarted && config.gameMode !== 'timeUp') {
+    // Chỉ set timer mới nếu game KHÔNG đang chạy và không phải TimeUp mode
+    if (!isGameStarted && config.gameMode !== 'timeUp' && !isGameWon) {
       autoPauseTimerRef.current = setTimeout(() => {
         setIsGameStarted(false);
         setIsGameWon(false); // Reset game won state khi auto-pause
@@ -112,7 +158,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
         setCardStates(prev => ({ ...prev, ...newStates }));
       }, autoPauseTimerDuration);
     }
-  }, [isGameStarted, cardStates, autoPauseTimerDuration, config.gameMode]);
+  }, [isGameStarted, isGameWon, cardStates, autoPauseTimerDuration, config.gameMode]);
   
   // Function để start TimeUp timer
   const startTimeUpTimer = useCallback(() => {
@@ -150,9 +196,9 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
   
   // Handle card open changes với logic giới hạn 2 thẻ và disable matched cards
   const handleCardOpenChange = useCallback((cardIndex, newOpen) => {
-    // KHÔNG reset auto-pause timer khi game đang chạy
-    // Chỉ reset khi game chưa bắt đầu và là normal mode
-    if (config.gameMode === 'normal' && !isGameStarted) {
+    // Chỉ reset auto-pause timer khi game chưa bắt đầu và là normal mode
+    // VÀ không phải khi đang cố gắng mở thẻ (newOpen = true)
+    if (config.gameMode === 'normal' && !isGameStarted && !newOpen) {
       resetAutoPauseTimer();
     }
     
@@ -171,6 +217,9 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       if (currentOpenCards >= 2) {
         return; // Không thực hiện thay đổi
       }
+      
+      // Track click khi mở thẻ trong game
+      trackClick();
     }
     
     setCardStates(prev => ({
@@ -180,10 +229,17 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
         open: newOpen
       }
     }));
-  }, [cardStates, isGameStarted, resetAutoPauseTimer, config.gameMode]);
+  }, [cardStates, isGameStarted, resetAutoPauseTimer, config.gameMode, trackClick]);
   
   // Hàm tạo random pairs
   const generateRandomPairs = useCallback(() => {
+    console.log('🎲 generateRandomPairs called with:', {
+      totalCards,
+      minValue,
+      maxValue,
+      cardIndices: cardIndices.length
+    });
+    
     setCardStates(prevStates => {
       const newStates = {};
       const pairsCount = Math.floor(totalCards / 2);
@@ -243,6 +299,8 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
         };
       });
       
+      console.log('🎲 Generated new card values:', Object.values(newStates).map(card => card.value));
+      
       return newStates;
     });
   }, [totalCards, cardIndices, minValue, maxValue]);
@@ -251,7 +309,24 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
   
   // Start/Reset game
   const startGame = useCallback(() => {
-    generateRandomPairs();
+    console.log('🔄 startGame called - triggering restart');
+    
+    // Clear timers trước khi start
+    if (autoPauseTimerRef.current) {
+      clearTimeout(autoPauseTimerRef.current);
+      autoPauseTimerRef.current = null;
+    }
+    if (timeUpTimerRef.current) {
+      clearInterval(timeUpTimerRef.current);
+      timeUpTimerRef.current = null;
+    }
+    
+    // Start game session
+    startSession(config);
+    
+    // Force regenerate cardIndices by incrementing restart key
+    setGameRestartKey(prev => prev + 1);
+    
     const newStates = {};
     cardIndices.forEach((index) => {
       newStates[index] = { 
@@ -265,12 +340,48 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     setIsGameWon(false); // Reset game won state
     setIsGameLose(false); // Reset game lose state
     
+    // Trigger animation cho START/RESTART
+    // Mở lần lượt từng thẻ để tạo hiệu ứng animation tuần tự
+    const openCardsSequentially = () => {
+      cardIndices.forEach((index, arrayIndex) => {
+        setTimeout(() => {
+          setCardStates(prev => ({
+            ...prev,
+            [index]: { 
+              ...prev[index], 
+              open: true // Mở từng thẻ lần lượt
+            }
+          }));
+        }, arrayIndex * 100); // Mỗi thẻ cách nhau 100ms
+      });
+      
+      // Sau khi mở hết, đóng lần lượt từng thẻ
+      const totalOpenTime = cardIndices.length * 100 + 500; // Thời gian để mở hết + delay 500ms
+      
+      cardIndices.forEach((index, arrayIndex) => {
+        setTimeout(() => {
+          setCardStates(prev => ({
+            ...prev,
+            [index]: { 
+              ...prev[index], 
+              open: false // Đóng từng thẻ lần lượt
+            }
+          }));
+        }, totalOpenTime + arrayIndex * 100); // Bắt đầu đóng sau khi mở hết
+      });
+    };
+    
+    // Bắt đầu animation sau 100ms
+    setTimeout(() => {
+      openCardsSequentially();
+    }, 100);
+    
     // Bắt đầu timer tương ứng với game mode
     if (config.gameMode === 'timeUp') {
       startTimeUpTimer();
     }
     // Không gọi resetAutoPauseTimer khi game started = true
-  }, [generateRandomPairs, cardIndices, cardStates, config.gameMode, startTimeUpTimer]);
+  }, [cardIndices, cardStates, config, startSession, config.gameMode, startTimeUpTimer, setIsGameStarted, setIsGameWon, setIsGameLose, setCardStates, setGameRestartKey]);
   
   // Pause game
   const pauseGame = useCallback(() => {
@@ -294,12 +405,15 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
   
   // Toggle game state (start/pause)
   const toggleGameState = useCallback(() => {
-    if (isGameStarted) {
+    if (isGameWon) {
+      // Nếu game đã thắng, luôn restart
+      startGame();
+    } else if (isGameStarted) {
       pauseGame();
     } else {
       startGame();
     }
-  }, [isGameStarted, pauseGame, startGame]);
+  }, [isGameWon, isGameStarted, pauseGame, startGame]);
   
   // Quick action functions
   
@@ -381,6 +495,14 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       return () => clearTimeout(timer);
     }
   }, [cardIndices.length, hasInitialRandomized, generateRandomPairs, config.autoStart, startGame]);
+  
+  // Generate random pairs when cardIndices changes (after restart)
+  useEffect(() => {
+    if (gameRestartKey > 0) {
+      console.log('🎲 useEffect: Generating random pairs after restart');
+      generateRandomPairs();
+    }
+  }, [gameRestartKey, generateRandomPairs]);
 
   // Chạy random pairs khi rows hoặc cols thay đổi (sau khi đã khởi tạo lần đầu)
   useEffect(() => {
@@ -405,6 +527,10 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
         
         // Kiểm tra nếu 2 card match (value giống nhau)
         if (card1State.value === card2State.value) {
+          // Track match
+          const currentMatches = Object.values(cardStates).filter(state => state.matched).length / 2;
+          trackMatch(currentMatches);
+          
           // Đánh dấu 2 card đã match
           const timer = setTimeout(() => {
             setCardStates(prev => ({
@@ -429,12 +555,17 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
         }
       }
     }
-  }, [twoCardOpen, isGameStarted, cardStates]);
+  }, [twoCardOpen, isGameStarted, cardStates, trackMatch]);
   
   // Cập nhật trạng thái game thắng
   useEffect(() => {
     setIsGameWon(gameWonStatus);
-  }, [gameWonStatus]);
+    
+    // End session khi game thắng
+    if (gameWonStatus && isSessionActive) {
+      endSession(true); // true = completed
+    }
+  }, [gameWonStatus, isSessionActive, endSession]);
   
   // Effect để cleanup timer khi component unmount
   useEffect(() => {
@@ -500,6 +631,9 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     isGameWon,
     isGameLose,
     twoCardOpen,
+    twoCardOpenNoMatch, // Thêm trạng thái 2 thẻ mở nhưng không match
+    twoCardOpenAndMatch, // Thêm trạng thái 2 thẻ mở và match
+    startRestartAnimation, // Thêm trạng thái animation cho START/RESTART
     timeUpTimer, // Timer cho TimeUp mode
     
     // Card handlers
@@ -524,7 +658,14 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     // Timer functions
     resetAutoPauseTimer,
     startTimeUpTimer,
-    stopTimeUpTimer
+    stopTimeUpTimer,
+    
+    // Game session
+    currentSession,
+    isSessionActive,
+    sessionHistory,
+    clearSessionHistory,
+    getSessionStats
   };
 };
 

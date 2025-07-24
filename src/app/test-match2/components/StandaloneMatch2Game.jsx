@@ -27,6 +27,9 @@ const StandaloneMatch2Game = React.forwardRef(({
   // Pointer Events Control State - foreground enabled by default để có thể click Start button
   const [pointerEventsMode, setPointerEventsMode] = useState('foreground'); // 'background', 'cards', 'foreground'
   
+  // State để track việc cập nhật card states
+  const [isUpdatingCardStates, setIsUpdatingCardStates] = useState(false);
+  
   // Timer state để truyền vào Rive
   const [timer, setTimer] = useState(gameConfig.autoPauseTimer / 1000);
   
@@ -42,11 +45,30 @@ const StandaloneMatch2Game = React.forwardRef(({
     isGameWon,
     isGameLose,
     twoCardOpen,
+    twoCardOpenNoMatch, // Thêm trạng thái mới
+    twoCardOpenAndMatch, // Thêm trạng thái mới
+    startRestartAnimation, // Thêm trạng thái animation cho START/RESTART
     timeUpTimer,
     handleCardValueChange,
     handleCardOpenChange,
+    generateRandomPairs,
+    startGame,
+    pauseGame,
     toggleGameState,
-    resetAutoPauseTimer
+    setSequentialValues,
+    openAllCards,
+    closeAllCards,
+    resetAllValues,
+    copyDebugData,
+    resetAutoPauseTimer,
+    startTimeUpTimer,
+    stopTimeUpTimer,
+    // Game session
+    currentSession,
+    isSessionActive,
+    sessionHistory,
+    clearSessionHistory,
+    getSessionStats
   } = useMatch2GameWithConfig(gameConfig);
   
   // Handle pointer enter để reset auto-pause timer
@@ -69,12 +91,15 @@ const StandaloneMatch2Game = React.forwardRef(({
     }
     
     // Tự động chuyển pointer events mode khi game bắt đầu/dừng
-    if (isGameStarted) {
+    if (isGameWon) {
+      // Khi game thắng, cho phép click nút Restart
+      setPointerEventsMode('foreground');
+    } else if (isGameStarted) {
       setPointerEventsMode('cards'); // Cho phép click vào thẻ bài
     } else {
       setPointerEventsMode('foreground'); // Cho phép click nút Start
     }
-  }, [isGameStarted, onGameStarted, config, cardStates, totalCards]);
+  }, [isGameStarted, isGameWon, onGameStarted, config, cardStates, totalCards]);
   
   React.useEffect(() => {
     if (onGamePaused && !isGameStarted) {
@@ -102,10 +127,19 @@ const StandaloneMatch2Game = React.forwardRef(({
       isGameWon,
       isGameLose,
       twoCardOpen,
+      twoCardOpenNoMatch, // Thêm trạng thái mới
+      twoCardOpenAndMatch, // Thêm trạng thái mới
+      startRestartAnimation, // Thêm trạng thái animation cho START/RESTART
       timeUpTimer,
       totalCards
+    }),
+    getSessionData: () => ({
+      currentSession,
+      isSessionActive,
+      sessionHistory,
+      getSessionStats: getSessionStats()
     })
-  }), [config, cardStates, isGameStarted, isGameWon, isGameLose, twoCardOpen, timeUpTimer, totalCards]);
+  }), [config, cardStates, isGameStarted, isGameWon, isGameLose, twoCardOpen, twoCardOpenNoMatch, twoCardOpenAndMatch, startRestartAnimation, timeUpTimer, totalCards, currentSession, isSessionActive, sessionHistory, getSessionStats]);
   
   return (
     <div 
@@ -155,6 +189,9 @@ const StandaloneMatch2Game = React.forwardRef(({
                   isGameStarted={isGameStarted}
                   cardStates={cardStates}
                   pointerEventsEnabled={pointerEventsMode === 'cards' && config.enablePointerEvents}
+                  twoCardOpenNoMatch={twoCardOpenNoMatch} // Thêm prop mới
+                  twoCardOpenAndMatch={twoCardOpenAndMatch} // Thêm prop mới
+                  startRestartAnimation={startRestartAnimation} // Thêm prop mới cho START/RESTART animation
                   style={{
                     // width: '160px',
                     // height: '220px',
@@ -172,10 +209,13 @@ const StandaloneMatch2Game = React.forwardRef(({
           isGameWon={isGameWon} 
           isGameLose={isGameLose}
           gameStarted={isGameStarted}
+          isUpdatingCardStates={isUpdatingCardStates}
           pointerEventsEnabled={pointerEventsMode === 'foreground' && config.enablePointerEvents}
           toggleGameState={toggleGameState}
           timer={timer}
           gameMode={config.gameMode}
+          twoCardOpenNoMatch={twoCardOpenNoMatch} // Thêm prop mới
+          twoCardOpenAndMatch={twoCardOpenAndMatch} // Thêm prop mới
         />
         
       </div>

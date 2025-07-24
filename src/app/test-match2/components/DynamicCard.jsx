@@ -21,6 +21,9 @@ const DynamicCard = React.memo(({
   isGameStarted = false, 
   cardStates = {}, 
   pointerEventsEnabled = true,
+  twoCardOpenNoMatch = false, // Thêm prop mới
+  twoCardOpenAndMatch = false, // Thêm prop mới
+  startRestartAnimation = false, // Thêm prop mới cho START/RESTART animation
   style = {}
 }) => {
   const { rive, RiveComponent } = useRive({
@@ -42,6 +45,11 @@ const DynamicCard = React.memo(({
   const { value: cardOpen, setValue: setCardOpen } = useViewModelInstanceBoolean('cardOpen', cardInstance);
   const { value: matched, setValue: setMatched } = useViewModelInstanceBoolean('matched', cardInstance);
   const { value: gameStarted, setValue: setGameStarted } = useViewModelInstanceBoolean('gameStarted', cardInstance);
+  
+  // Thêm các trạng thái mới cho Rive
+  const { setValue: setTwoCardOpenNoMatch } = useViewModelInstanceBoolean('twoCardOpenNoMatch', cardInstance);
+  const { setValue: setTwoCardOpenAndMatch } = useViewModelInstanceBoolean('twoCardOpenAndMatch', cardInstance);
+  const { setValue: setStartRestartAnimation } = useViewModelInstanceBoolean('startRestartAnimation', cardInstance);
   
   // Chỉ đồng bộ một chiều: external state -> Rive (single source of truth)
   React.useEffect(() => {
@@ -67,6 +75,27 @@ const DynamicCard = React.memo(({
       setGameStarted(isGameStarted);
     }
   }, [isGameStarted, setGameStarted]);
+  
+  // Đồng bộ twoCardOpenNoMatch từ React state vào Rive
+  React.useEffect(() => {
+    if (twoCardOpenNoMatch !== undefined && setTwoCardOpenNoMatch) {
+      setTwoCardOpenNoMatch(twoCardOpenNoMatch);
+    }
+  }, [twoCardOpenNoMatch, setTwoCardOpenNoMatch]);
+  
+  // Đồng bộ twoCardOpenAndMatch từ React state vào Rive
+  React.useEffect(() => {
+    if (twoCardOpenAndMatch !== undefined && setTwoCardOpenAndMatch) {
+      setTwoCardOpenAndMatch(twoCardOpenAndMatch);
+    }
+  }, [twoCardOpenAndMatch, setTwoCardOpenAndMatch]);
+  
+  // Đồng bộ startRestartAnimation từ React state vào Rive
+  React.useEffect(() => {
+    if (startRestartAnimation !== undefined && setStartRestartAnimation) {
+      setStartRestartAnimation(startRestartAnimation);
+    }
+  }, [startRestartAnimation, setStartRestartAnimation]);
   
   // Chỉ khởi tạo state ban đầu từ Rive một lần duy nhất
   const [initialized, setInitialized] = React.useState(false);

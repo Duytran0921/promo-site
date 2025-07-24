@@ -22,7 +22,10 @@ const Match2Foreground = React.memo(({
   pointerEventsEnabled = false, 
   toggleGameState, 
   generateRandomPairs, 
-  gameMode = 'Default' 
+  gameMode = 'Default',
+  twoCardOpenNoMatch = false, // Thêm prop mới
+  twoCardOpenAndMatch = false, // Thêm prop mới
+  timer = 0
 }) => {
   const { rive, RiveComponent } = useRive({
     src: '/assets/animation/match_2_fg.riv',
@@ -46,6 +49,11 @@ const Match2Foreground = React.memo(({
   const { setValue: setGameStarted } = useViewModelInstanceBoolean('gameStarted', gameFGInstance);
   const { setValue: setGameMode } = useViewModelInstanceNumber('gameMode', gameFGInstance);
   
+  // Thêm các trạng thái mới cho Rive
+  const { setValue: setTwoCardOpenNoMatch } = useViewModelInstanceBoolean('twoCardOpenNoMatch', gameFGInstance);
+  const { setValue: setTwoCardOpenAndMatch } = useViewModelInstanceBoolean('twoCardOpenAndMatch', gameFGInstance);
+  const { setValue: setTimer } = useViewModelInstanceNumber('timer', gameFGInstance);
+  
   // Truyền button label động vào Rive
   const { setValue: setButtonLabel } = useViewModelInstanceString('property of Button/label', gameFGInstance);
   
@@ -63,33 +71,27 @@ const Match2Foreground = React.memo(({
   // Kết nối onClick với toggleGameState thông qua trigger - Logic giống hệt Control Panel
   useViewModelInstanceTrigger('property of Button/btnClk', gameFGInstance, {
     onTrigger: () => {
-      console.log('🔄 Rive Button clicked!');
-      console.log('📊 Current state:', {
-        isGameWon,
-        gameStarted,
-        isUpdatingCardStates,
-        gameMode
-      });
-      
       // Không cho phép click button khi đang cập nhật cardStates
       if (isUpdatingCardStates) {
-        console.warn('❌ Button click ignored - card states are being updated');
         return;
       }
       
-      // Logic giống hệt Control Panel button
-      if (toggleGameState) {
-        console.log('✅ Calling toggleGameState from Rive button');
-        
-        // Thêm delay nhỏ để đảm bảo state được cập nhật đúng cách
-        setTimeout(() => {
-          console.log('🚀 Executing toggleGameState after delay');
-          toggleGameState();
-        }, 10); // Delay nhỏ để tránh race condition
-      } else {
-        console.warn('❌ toggleGameState function not available');
+      // Kiểm tra pointer events
+      if (!pointerEventsEnabled) {
+        return;
       }
-    },
+      
+      // Logic giống hệt Control Panel
+      if (gameMode === 'timeUp') {
+        // TimeUp mode: chỉ cho phép start game khi chưa bắt đầu
+        if (!gameStarted) {
+          toggleGameState();
+        }
+      } else {
+        // Normal mode: cho phép toggle bình thường
+        toggleGameState();
+      }
+    }
   });
   
   // Đồng bộ isGameWon từ React state vào Rive
@@ -132,6 +134,30 @@ const Match2Foreground = React.memo(({
       setButtonLabel(label);
     }
   }, [isGameWon, gameStarted, setButtonLabel]);
+  
+  // Đồng bộ twoCardOpenNoMatch từ React state vào Rive
+  React.useEffect(() => {
+    if (twoCardOpenNoMatch !== undefined && setTwoCardOpenNoMatch) {
+      console.log('🔄 Syncing twoCardOpenNoMatch to Rive:', twoCardOpenNoMatch);
+      setTwoCardOpenNoMatch(twoCardOpenNoMatch);
+    }
+  }, [twoCardOpenNoMatch, setTwoCardOpenNoMatch]);
+  
+  // Đồng bộ twoCardOpenAndMatch từ React state vào Rive
+  React.useEffect(() => {
+    if (twoCardOpenAndMatch !== undefined && setTwoCardOpenAndMatch) {
+      console.log('🔄 Syncing twoCardOpenAndMatch to Rive:', twoCardOpenAndMatch);
+      setTwoCardOpenAndMatch(twoCardOpenAndMatch);
+    }
+  }, [twoCardOpenAndMatch, setTwoCardOpenAndMatch]);
+  
+  // Đồng bộ timer từ React state vào Rive
+  React.useEffect(() => {
+    if (timer !== undefined && setTimer) {
+      console.log('🔄 Syncing timer to Rive:', timer);
+      setTimer(timer);
+    }
+  }, [timer, setTimer]);
 
   return (
     <div className={`absolute inset-0 w-full h-full overflow-hidden rounded-lg z-20 ${
