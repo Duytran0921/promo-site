@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Game Session</title>
+</head>
+<body>
+    <h1>Test Game Session Hook</h1>
+    <div id="app">
+        <button onclick="testSession()">Test Session</button>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        // Simple test to check if session hook works without infinite loop
+        function testSession() {
+            console.log('Testing session hook...');
+            // This will be tested in the actual React app
+            document.getElementById('output').innerHTML = 'Check console for session test results';
+        }
+    </script>
+</body>
+</html> 

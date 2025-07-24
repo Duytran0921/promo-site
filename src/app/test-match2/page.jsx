@@ -62,6 +62,13 @@ const TestMatch2Page = () => {
     configLoaded,
     lastSavedConfig,
     
+    // Game session
+    currentSession,
+    isSessionActive,
+    sessionHistory,
+    clearSessionHistory,
+    getSessionStats,
+    
     // Debug
     copyDebugData,
     
@@ -143,6 +150,12 @@ const TestMatch2Page = () => {
           // Config persistence props
           configLoaded={configLoaded}
           lastSavedConfig={lastSavedConfig}
+          // Game session props
+          currentSession={currentSession}
+          isSessionActive={isSessionActive}
+          sessionHistory={sessionHistory}
+          clearSessionHistory={clearSessionHistory}
+          getSessionStats={getSessionStats}
         />
       </div>
     </div>

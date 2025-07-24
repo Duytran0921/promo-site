@@ -1,5 +1,6 @@
 'use client';
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useGameSession } from './hooks/useGameSession';
 
 /**
  * Custom hook quản lý logic game Match-2
@@ -42,6 +43,19 @@ export const useMatch2Game = (initialRows = 2, initialCols = 2) => {
   // Config persistence state
   const [configLoaded, setConfigLoaded] = useState(false);
   const [lastSavedConfig, setLastSavedConfig] = useState(null);
+  
+  // Game session management
+  const {
+    currentSession,
+    isSessionActive,
+    startSession,
+    endSession,
+    trackClick,
+    trackMatch,
+    sessionHistory,
+    clearSessionHistory,
+    getSessionStats
+  } = useGameSession();
 
   // Computed values
   const totalCards = rows * cols;
@@ -230,6 +244,11 @@ export const useMatch2Game = (initialRows = 2, initialCols = 2) => {
       return;
     }
     
+    // Track click khi mở thẻ (chỉ khi game đang chạy và đang mở thẻ)
+    if (isGameStarted && newOpen) {
+      trackClick();
+    }
+    
     setCardStates(prev => {
       // Error handling: Tự động tạo card nếu không tồn tại
       let currentCard = prev[cardIndex];
@@ -264,7 +283,7 @@ export const useMatch2Game = (initialRows = 2, initialCols = 2) => {
         }
       };
     });
-  }, [isGameStarted, isUpdatingCardStates]);
+  }, [isGameStarted, isUpdatingCardStates]); // Removed trackClick from dependencies
   
   // Hàm tạo random pairs
   const generateRandomPairs = useCallback(() => {
@@ -409,9 +428,20 @@ export const useMatch2Game = (initialRows = 2, initialCols = 2) => {
       setIsGameStarted(true);
       setIsGameWon(false); // Reset game won state
       setIsGeneratingPairs(false);
+      
+      // Bắt đầu game session
+      const gameConfig = {
+        gameMode,
+        rows,
+        cols,
+        minValue,
+        maxValue
+      };
+      startSession(gameConfig);
+      
       console.log('✅ startGame completed for', cardIndices.length, 'cards');
     }, 50); // 50ms delay để tránh race condition
-  }, [generateRandomPairs, isGeneratingPairs, isUpdatingCardStates, cardIndices.length, rows, cols]);
+  }, [generateRandomPairs, isGeneratingPairs, isUpdatingCardStates, cardIndices.length, rows, cols, gameMode, minValue, maxValue]); // Removed startSession from dependencies
   
   // Pause game
   const pauseGame = useCallback(() => {
@@ -430,7 +460,12 @@ export const useMatch2Game = (initialRows = 2, initialCols = 2) => {
       return newStates;
     });
     setIsGameStarted(false);
-  }, [cardIndices, minValue]);
+    
+    // Kết thúc session khi pause (không completed)
+    if (isSessionActive) {
+      endSession(false);
+    }
+  }, [cardIndices, minValue, isSessionActive]); // Removed endSession from dependencies
   
   // Toggle game state (start/pause)
   const toggleGameState = useCallback(() => {
@@ -596,6 +631,10 @@ export const useMatch2Game = (initialRows = 2, initialCols = 2) => {
         
         // Kiểm tra nếu 2 card match (value giống nhau)
         if (card1State.value === card2State.value) {
+          // Track match trong session
+          const currentMatchedPairs = Object.values(cardStates).filter(state => state.matched).length;
+          trackMatch(currentMatchedPairs);
+          
           // Đánh dấu 2 card đã match
           const timer = setTimeout(() => {
             setCardStates(prev => ({
@@ -620,12 +659,17 @@ export const useMatch2Game = (initialRows = 2, initialCols = 2) => {
         }
       }
     }
-  }, [twoCardOpen, isGameStarted, cardStates, isUpdatingCardStates]);
+  }, [twoCardOpen, isGameStarted, cardStates, isUpdatingCardStates]); // Removed trackMatch from dependencies
   
   // Cập nhật trạng thái game thắng
   useEffect(() => {
     setIsGameWon(gameWonStatus);
-  }, [gameWonStatus]);
+    
+    // Kết thúc session khi game thắng
+    if (gameWonStatus && isSessionActive) {
+      endSession(true); // completed = true
+    }
+  }, [gameWonStatus, isSessionActive]); // Removed endSession from dependencies
   
   // Reset isGeneratingPairs sau khi generateRandomPairs hoàn thành
   useEffect(() => {
@@ -688,6 +732,13 @@ export const useMatch2Game = (initialRows = 2, initialCols = 2) => {
     loadConfig,
     configLoaded,
     lastSavedConfig,
+    
+    // Game session
+    currentSession,
+    isSessionActive,
+    sessionHistory,
+    clearSessionHistory,
+    getSessionStats,
     
     // Debug
     copyDebugData,

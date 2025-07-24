@@ -20,7 +20,13 @@ const QuickActions = ({
   setGameMode,
   // Config persistence props
   configLoaded,
-  lastSavedConfig
+  lastSavedConfig,
+  // Game session props
+  currentSession,
+  isSessionActive,
+  sessionHistory,
+  clearSessionHistory,
+  getSessionStats
 }) => {
 
   // Thiết lập pointer events mode mặc định là 'foreground' khi component được mount
@@ -212,30 +218,69 @@ const QuickActions = ({
         >
           Copy Debug
         </button>
+        <button
+          onClick={() => {
+            if (isUpdatingCardStates) {
+              console.warn('Button click ignored - card states are being updated');
+              return;
+            }
+            clearSessionHistory();
+          }}
+          disabled={isUpdatingCardStates}
+          className={`px-3 py-1 text-xs rounded font-medium ${
+            isUpdatingCardStates
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-red-500 text-white hover:bg-red-600'
+          }`}
+        >
+          Clear Sessions
+        </button>
       </div>
       
-      {/* Debug Info */}
-      <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
-        <div className="flex items-center justify-between mb-1">
-          <div className="font-medium">Debug - Game Status:</div>
-          <button
-            onClick={copyDebugData}
-            className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
-          >
-            Copy
-          </button>
-        </div>
-        <div className="text-gray-600 mb-2">
-          <div className="flex items-center gap-4 flex-wrap">
-            <span>Two-Card Open: <span className={`font-bold ${twoCardOpen ? 'text-green-600' : 'text-red-600'}`}>{twoCardOpen ? 'TRUE' : 'FALSE'}</span></span>
-            <span>Game Started: <span className={`font-bold ${isGameStarted ? 'text-green-600' : 'text-red-600'}`}>{isGameStarted ? 'TRUE' : 'FALSE'}</span></span>
-            <span>Game Won: <span className={`font-bold ${isGameWon ? 'text-green-600' : 'text-red-600'}`}>{isGameWon ? 'TRUE' : 'FALSE'}</span></span>
-            <span>Game Started (Rive): <span className={`font-bold ${isGameStarted ? 'text-green-600' : 'text-red-600'}`}>{isGameStarted ? 'TRUE' : 'FALSE'}</span></span>
-            <span>Game Mode: <span className="font-bold text-orange-600">{gameMode}</span></span>
-            <span>Matched Cards: <span className="font-bold text-blue-600">{Object.values(cardStates).filter(state => state.matched).length}</span></span>
-            <span>Total Pairs: <span className="font-bold text-purple-600">{Math.floor(totalCards / 2)}</span></span>
+              {/* Debug Info */}
+        <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
+          <div className="flex items-center justify-between mb-1">
+            <div className="font-medium">Debug - Game Status:</div>
+            <button
+              onClick={copyDebugData}
+              className="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+            >
+              Copy
+            </button>
           </div>
-        </div>
+          <div className="text-gray-600 mb-2">
+            <div className="flex items-center gap-4 flex-wrap">
+              <span>Two-Card Open: <span className={`font-bold ${twoCardOpen ? 'text-green-600' : 'text-red-600'}`}>{twoCardOpen ? 'TRUE' : 'FALSE'}</span></span>
+              <span>Game Started: <span className={`font-bold ${isGameStarted ? 'text-green-600' : 'text-red-600'}`}>{isGameStarted ? 'TRUE' : 'FALSE'}</span></span>
+              <span>Game Won: <span className={`font-bold ${isGameWon ? 'text-green-600' : 'text-red-600'}`}>{isGameWon ? 'TRUE' : 'FALSE'}</span></span>
+              <span>Game Started (Rive): <span className={`font-bold ${isGameStarted ? 'text-green-600' : 'text-red-600'}`}>{isGameStarted ? 'TRUE' : 'FALSE'}</span></span>
+              <span>Game Mode: <span className="font-bold text-orange-600">{gameMode}</span></span>
+              <span>Matched Cards: <span className="font-bold text-blue-600">{Object.values(cardStates).filter(state => state.matched).length}</span></span>
+              <span>Total Pairs: <span className="font-bold text-purple-600">{Math.floor(totalCards / 2)}</span></span>
+            </div>
+          </div>
+          
+          {/* Game Session Debug Info */}
+          <div className="font-medium mb-1">Debug - Game Session:</div>
+          <div className="text-gray-600 mb-2">
+            <div className="flex items-center gap-4 flex-wrap">
+              <span>Session Active: <span className={`font-bold ${isSessionActive ? 'text-green-600' : 'text-red-600'}`}>{isSessionActive ? 'TRUE' : 'FALSE'}</span></span>
+              {currentSession && (
+                <>
+                  <span>Session ID: <span className="font-bold text-purple-600">{currentSession.sessionId.substring(0, 12)}...</span></span>
+                  <span>Total Clicks: <span className="font-bold text-blue-600">{currentSession.gameplay.totalClicks}</span></span>
+                  <span>Matched Pairs: <span className="font-bold text-green-600">{currentSession.gameplay.matchedPairs}</span></span>
+                </>
+              )}
+              {getSessionStats && (
+                <>
+                  <span>Elapsed Time: <span className="font-bold text-orange-600">{getSessionStats()?.elapsedTime || '0.00'}s</span></span>
+                  <span>Completion Rate: <span className="font-bold text-indigo-600">{getSessionStats()?.completionRate?.toFixed(1) || '0'}%</span></span>
+                </>
+              )}
+              <span>History Count: <span className="font-bold text-gray-600">{sessionHistory.length}/10</span></span>
+            </div>
+          </div>
         
         {/* Config Persistence Debug Info */}
         <div className="font-medium mb-1">Debug - Config Persistence:</div>
