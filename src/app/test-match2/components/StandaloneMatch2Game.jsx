@@ -63,6 +63,7 @@ const StandaloneMatch2Game = React.forwardRef(({
     resetAutoPauseTimer,
     startTimeUpTimer,
     stopTimeUpTimer,
+    trackPointerActivity,
     // Game session
     currentSession,
     isSessionActive,
@@ -71,12 +72,13 @@ const StandaloneMatch2Game = React.forwardRef(({
     getSessionStats
   } = useMatch2GameWithConfig(gameConfig);
   
-  // Handle pointer enter để reset auto-pause timer
+  // Handle pointer enter để reset auto-pause timer và inactivity timer
   const handlePointerEnter = useCallback(() => {
     if (isGameStarted) {
       resetAutoPauseTimer();
+      trackPointerActivity(); // Reset inactivity timer
     }
-  }, [isGameStarted, resetAutoPauseTimer]);
+  }, [isGameStarted, resetAutoPauseTimer, trackPointerActivity]);
   
   // Callback effects
   React.useEffect(() => {
@@ -101,10 +103,15 @@ const StandaloneMatch2Game = React.forwardRef(({
     }
   }, [isGameStarted, isGameWon, onGameStarted, config, cardStates, totalCards]);
   
+  // Track previous game started state để tránh trigger liên tục
+  const prevGameStartedRef = React.useRef(isGameStarted);
+  
   React.useEffect(() => {
-    if (onGamePaused && !isGameStarted) {
+    // Chỉ trigger onGamePaused khi game chuyển từ started sang paused
+    if (onGamePaused && prevGameStartedRef.current && !isGameStarted) {
       onGamePaused({ config, cardStates, totalCards });
     }
+    prevGameStartedRef.current = isGameStarted;
   }, [isGameStarted, onGamePaused, config, cardStates, totalCards]);
   
   // Timer effect để sync với Rive
@@ -145,7 +152,7 @@ const StandaloneMatch2Game = React.forwardRef(({
     <div 
       className={`relative overflow-hidden w-full flex items-center justify-center ${className}`}
       style={{
-        height: `${220 * rows + 4 * (rows - 1) + 100}px`,
+        height: `${config.cardHeight * rows + config.cardGap * (rows - 1) + 100}px`,
         minWidth: '500px',
         minHeight: '200px',
         ...containerStyle,
@@ -159,6 +166,7 @@ const StandaloneMatch2Game = React.forwardRef(({
         <Match2Background 
           isGameWon={isGameWon} 
           pointerEventsEnabled={pointerEventsMode === 'background' && config.enablePointerEvents}
+          onPointerActivity={trackPointerActivity}
         />
         
         {/* Content Layer */}
@@ -173,8 +181,8 @@ const StandaloneMatch2Game = React.forwardRef(({
               style={{ 
                 gridTemplateColumns: `repeat(${cols}, 1fr)`,
                 gridTemplateRows: `repeat(${rows}, 1fr)`,
-                width: `${160 * cols + 2 * (cols - 1)}px`,
-                height: `${220 * rows + 2 * (rows - 1)}px`,
+                width: `${config.cardWidth * cols + config.cardGap * (cols - 1)}px`,
+                height: `${config.cardHeight * rows + config.cardGap * (rows - 1)}px`,
                 maxWidth: '100vw',
                 maxHeight: '100vh'
               }}
@@ -192,6 +200,10 @@ const StandaloneMatch2Game = React.forwardRef(({
                   twoCardOpenNoMatch={twoCardOpenNoMatch} // Thêm prop mới
                   twoCardOpenAndMatch={twoCardOpenAndMatch} // Thêm prop mới
                   startRestartAnimation={startRestartAnimation} // Thêm prop mới cho START/RESTART animation
+                  label={cardStates[cardIndex]?.label || null} // Truyền label từ cardState
+                  labelOn={config.labelOn || false} // Truyền labelOn từ config
+                  valueImg={cardStates[cardIndex]?.valueImg || null} // Truyền valueImg từ cardState
+                  valueImgOn={config.valueImgOn || false} // Truyền valueImgOn từ config
                   style={{
                     // width: '160px',
                     // height: '220px',
@@ -216,6 +228,7 @@ const StandaloneMatch2Game = React.forwardRef(({
           gameMode={config.gameMode}
           twoCardOpenNoMatch={twoCardOpenNoMatch} // Thêm prop mới
           twoCardOpenAndMatch={twoCardOpenAndMatch} // Thêm prop mới
+          onPointerActivity={trackPointerActivity}
         />
         
       </div>

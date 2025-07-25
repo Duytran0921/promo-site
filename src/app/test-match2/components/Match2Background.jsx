@@ -11,7 +11,7 @@ import {
 } from '@rive-app/react-webgl2';
 
 // Background Rive Component
-const Match2Background = React.memo(({ isGameWon, pointerEventsEnabled = false }) => {
+const Match2Background = React.memo(({ isGameWon, pointerEventsEnabled = false, onPointerActivity = null }) => {
   const { rive, RiveComponent } = useRive({
     src: '/assets/animation/match_2_bg.riv',
     stateMachines: ['State Machine 1'],
@@ -38,9 +38,16 @@ const Match2Background = React.memo(({ isGameWon, pointerEventsEnabled = false }
   }, [isGameWon, setGameWon]);
 
   return (
-    <div className={`absolute inset-0 w-full h-full overflow-hidden rounded-lg ${
-      pointerEventsEnabled ? 'pointer-events-auto' : 'pointer-events-none'
-    }`}>
+    <div 
+      className={`absolute inset-0 w-full h-full overflow-hidden rounded-lg ${
+        pointerEventsEnabled ? 'pointer-events-auto' : 'pointer-events-none'
+      }`}
+      onPointerDown={() => {
+        if (pointerEventsEnabled && onPointerActivity) {
+          onPointerActivity();
+        }
+      }}
+    >
       {RiveComponent && (
         <RiveComponent 
         />

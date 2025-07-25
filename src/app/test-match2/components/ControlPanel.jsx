@@ -215,6 +215,10 @@ const ControlPanel = ({
                 onOpenChange={handleCardOpenChange}
                 mode="control"
                 cardState={cardStates[cardIndex] || { value: 1, open: false, matched: false }}
+                label={cardStates[cardIndex]?.label || null} // Truyền label từ cardState
+                labelOn={config?.labelOn || false} // Truyền labelOn từ config
+                valueImg={cardStates[cardIndex]?.valueImg || null} // Truyền valueImg từ cardState
+                valueImgOn={config?.valueImgOn || false} // Truyền valueImgOn từ config
               />
             ))}
           </div>

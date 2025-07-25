@@ -17,10 +17,15 @@ export const defaultConfig = {
   timeUpDuration: 30000, // 30 seconds for timeUp mode
   // UI configuration
   cardGap: 4,
+  cardWidth: 128, // Width of each card in pixels
+  cardHeight: 176, // Height of each card in pixels
   // Game behavior
   autoStart: false,
   showTimer: true,
-  enablePointerEvents: true
+  enablePointerEvents: true,
+  // Card image configuration
+  labelOn: false, // Boolean to show/hide label
+  valueImgOn: false // Boolean to show/hide value image
 };
 
 export const easyConfig = {
@@ -34,9 +39,14 @@ export const easyConfig = {
   gameMode: 'normal',
   timeUpDuration: 45000, // 45 seconds for timeUp mode
   cardGap: 4,
+  cardWidth: 128, // Width of each card in pixels
+  cardHeight: 176, // Height of each card in pixels
   autoStart: false,
   showTimer: true,
-  enablePointerEvents: true
+  enablePointerEvents: true,
+  // Card image configuration
+  labelOn: false, // Boolean to show/hide label
+  valueImgOn: false // Boolean to show/hide value image
 };
 
 export const mediumConfig = {
@@ -50,9 +60,14 @@ export const mediumConfig = {
   gameMode: 'normal',
   timeUpDuration: 35000, // 35 seconds for timeUp mode
   cardGap: 3,
+  cardWidth: 128, // Width of each card in pixels
+  cardHeight: 176, // Height of each card in pixels
   autoStart: false,
   showTimer: true,
-  enablePointerEvents: true
+  enablePointerEvents: true,
+  // Card image configuration
+  labelOn: false, // Boolean to show/hide label
+  valueImgOn: false // Boolean to show/hide value image
 };
 
 export const hardConfig = {
@@ -66,9 +81,14 @@ export const hardConfig = {
   gameMode: 'normal',
   timeUpDuration: 25000, // 25 seconds for timeUp mode
   cardGap: 2,
+  cardWidth: 128, // Width of each card in pixels
+  cardHeight: 176, // Height of each card in pixels
   autoStart: false,
   showTimer: false, // No timer display in hard mode
-  enablePointerEvents: true
+  enablePointerEvents: true,
+  // Card image configuration
+  labelOn: false, // Boolean to show/hide label
+  valueImgOn: false // Boolean to show/hide value image
 };
 
 export const bannerConfig = {
@@ -82,9 +102,14 @@ export const bannerConfig = {
   gameMode: 'normal',
   timeUpDuration: 25000, // 25 seconds for timeUp mode
   cardGap: 2,
+  cardWidth: 160, // Width of each card in pixels
+  cardHeight: 220, // Height of each card in pixels
   autoStart: false,
   showTimer: false, // No timer display in hard mode
-  enablePointerEvents: true
+  enablePointerEvents: true,
+  // Card image configuration
+  labelOn: false, // Boolean to show/hide label
+  valueImgOn: false // Boolean to show/hide value image
 };
 
 // TimeUp mode configs
@@ -131,7 +156,7 @@ export const getGameConfig = (configId) => {
 
 // Helper function to validate config
 export const validateGameConfig = (config) => {
-  const required = ['id', 'name', 'rows', 'cols', 'minValue', 'maxValue', 'autoPauseTimer', 'gameMode'];
+  const required = ['id', 'name', 'rows', 'cols', 'minValue', 'maxValue', 'autoPauseTimer', 'gameMode', 'labelOn', 'valueImgOn', 'cardWidth', 'cardHeight'];
   const missing = required.filter(key => !(key in config));
   
   if (missing.length > 0) {
@@ -156,6 +181,24 @@ export const validateGameConfig = (config) => {
   
   if (config.gameMode === 'timeUp' && (!config.timeUpDuration || config.timeUpDuration < 1000)) {
     throw new Error('timeUpDuration must be at least 1000ms when gameMode is "timeUp"');
+  }
+  
+  // Validate image properties
+  if (typeof config.labelOn !== 'boolean') {
+    throw new Error('labelOn must be a boolean');
+  }
+  
+  if (typeof config.valueImgOn !== 'boolean') {
+    throw new Error('valueImgOn must be a boolean');
+  }
+  
+  // Validate card dimensions
+  if (typeof config.cardWidth !== 'number' || config.cardWidth <= 0) {
+    throw new Error('cardWidth must be a positive number');
+  }
+  
+  if (typeof config.cardHeight !== 'number' || config.cardHeight <= 0) {
+    throw new Error('cardHeight must be a positive number');
   }
   
   return true;

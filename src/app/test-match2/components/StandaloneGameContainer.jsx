@@ -18,7 +18,8 @@ const StandaloneGameContainer = ({
   handleCardOpenChange,
   toggleGameState,
   generateRandomPairs,
-  gameMode
+  gameMode,
+  config // Thêm config để truy cập labelOn và valueImgOn
 }) => {
   return (
     <div 
@@ -59,6 +60,10 @@ const StandaloneGameContainer = ({
                 isGameStarted={isGameStarted}
                 cardStates={cardStates}
                 pointerEventsEnabled={pointerEventsMode === 'cards' && !isUpdatingCardStates}
+                label={cardStates[cardIndex]?.label || null} // Truyền label từ cardState
+                labelOn={config?.labelOn || false} // Truyền labelOn từ config
+                valueImg={cardStates[cardIndex]?.valueImg || null} // Truyền valueImg từ cardState
+                valueImgOn={config?.valueImgOn || false} // Truyền valueImgOn từ config
               />
             ))}
           </div>
@@ -79,4 +84,4 @@ const StandaloneGameContainer = ({
   );
 };
 
-export default StandaloneGameContainer; 
+export default StandaloneGameContainer;

@@ -181,7 +181,7 @@ const SimpleMatch2Game = React.forwardRef(({
                 gridTemplateColumns: `repeat(${cols}, 1fr)`,
                 gridTemplateRows: `repeat(${rows}, 1fr)`,
                 width: `${160 * cols + 2 * (cols - 1)}px`,
-                height: `${220 * rows + 2 * (rows - 1)}px`,
+                height: `${185 * rows + 2 * (rows - 1)}px`,
                 maxWidth: '100vw',
                 maxHeight: '100vh'
               }}

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { defaultConfig, validateGameConfig } from '../configs/gameConfig';
+import { getImageUrl } from '../configs/imageConfig';
 import { useGameSession } from './useGameSession';
 
 /**
@@ -50,6 +51,101 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
   
   // Auto-pause timer ref
   const autoPauseTimerRef = useRef(null);
+  const inactivityTimerRef = useRef(null); // Timer cho auto-pause sau 30s không có pointer event
+  
+  // Web Worker for inactivity timer (không bị throttling khi tab inactive)
+  const inactivityWorkerRef = useRef(null);
+  const [isWorkerReady, setIsWorkerReady] = useState(false);
+  
+  // Page visibility state để xử lý timer throttling khi tab inactive
+  const [isPageVisible, setIsPageVisible] = useState(true);
+  const inactivityStartTimeRef = useRef(null); // Lưu thời điểm bắt đầu timer
+  const remainingTimeRef = useRef(30000); // Thời gian còn lại của timer (mặc định 30s)
+  const isPausedByInactivityRef = useRef(false); // Flag để theo dõi xem game có bị pause bởi inactivity timer không
+  
+  // Web Worker setup để xử lý inactivity timer không bị throttling
+  useEffect(() => {
+    // Khởi tạo Web Worker
+    try {
+      const worker = new Worker('/workers/inactivityTimer.js');
+      inactivityWorkerRef.current = worker;
+      
+      // Xử lý messages từ worker
+      worker.onmessage = (e) => {
+        const { type, payload } = e.data;
+        
+        switch (type) {
+          case 'TIMER_COMPLETED':
+            // console.log('🔄 Auto-pausing game due to 30s inactivity (Web Worker)');
+            isPausedByInactivityRef.current = true;
+            pauseGame();
+            break;
+            
+          // case 'TIMER_STARTED':
+          //   console.log('▶️ Inactivity timer started (Web Worker):', payload.duration + 'ms');
+          //   break;
+            
+          // case 'TIMER_STOPPED':
+          //   console.log('⏹️ Inactivity timer stopped (Web Worker)');
+          //   break;
+            
+          // case 'TIMER_PAUSED':
+          //   console.log('⏸️ Inactivity timer paused (Web Worker), remaining:', payload.remainingTime + 'ms');
+          //   break;
+            
+          // case 'TIMER_RESUMED':
+          //   console.log('▶️ Inactivity timer resumed (Web Worker), remaining:', payload.remainingTime + 'ms');
+          //   break;
+            
+          // case 'TIMER_STATUS':
+          //   // Optional: handle status updates
+          //   break;
+            
+          default:
+            // console.warn('Unknown worker message type:', type);
+        }
+      };
+      
+      worker.onerror = (error) => {
+        console.error('Web Worker error:', error);
+        setIsWorkerReady(false);
+      };
+      
+      setIsWorkerReady(true);
+      console.log('✅ Inactivity Web Worker initialized');
+      
+    } catch (error) {
+      console.error('Failed to initialize Web Worker:', error);
+      setIsWorkerReady(false);
+    }
+    
+    // Cleanup
+    return () => {
+      if (inactivityWorkerRef.current) {
+        inactivityWorkerRef.current.terminate();
+        inactivityWorkerRef.current = null;
+        setIsWorkerReady(false);
+        console.log('🧹 Inactivity Web Worker terminated');
+      }
+    };
+  }, []); // Chỉ chạy một lần khi component mount
+  
+  // Page Visibility API setup - chỉ để track trạng thái, KHÔNG pause/resume timer
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const isVisible = !document.hidden;
+      setIsPageVisible(isVisible);
+      console.log('📱 Tab visibility changed:', isVisible ? 'visible' : 'hidden', '- Timer continues running');
+    };
+    
+    // Add event listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []); // Không cần dependencies vì chỉ track visibility
   
   // Game session management
   const {
@@ -151,14 +247,20 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
         setIsGameWon(false); // Reset game won state khi auto-pause
         setIsGameLose(false); // Reset game lose state khi auto-pause
         // Đóng tất cả thẻ khi auto-pause
-        const newStates = {};
-        Object.keys(cardStates).forEach((index) => {
-          newStates[index] = { ...cardStates[index], open: false };
+        setCardStates(prev => {
+          const newStates = {};
+          Object.keys(prev).forEach((index) => {
+            newStates[index] = { ...prev[index], open: false };
+          });
+          return newStates;
         });
-        setCardStates(prev => ({ ...prev, ...newStates }));
       }, autoPauseTimerDuration);
     }
-  }, [isGameStarted, isGameWon, cardStates, autoPauseTimerDuration, config.gameMode]);
+  }, [isGameStarted, isGameWon, autoPauseTimerDuration, config.gameMode]);
+  
+
+
+
   
   // Function để start TimeUp timer
   const startTimeUpTimer = useCallback(() => {
@@ -194,6 +296,95 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     }
   }, []);
   
+  // Pause game
+  const pauseGame = useCallback(() => {
+    // Clear timers
+    if (autoPauseTimerRef.current) {
+      clearTimeout(autoPauseTimerRef.current);
+      autoPauseTimerRef.current = null;
+    }
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+    
+    // Stop Web Worker timer
+    if (isWorkerReady && inactivityWorkerRef.current) {
+      inactivityWorkerRef.current.postMessage({ type: 'STOP_TIMER' });
+    }
+    
+    // Reset inactivity timer state
+    remainingTimeRef.current = 30000;
+    inactivityStartTimeRef.current = null;
+    isPausedByInactivityRef.current = false; // Reset flag khi start game
+    
+    if (config.gameMode === 'timeUp') {
+      stopTimeUpTimer();
+    }
+    
+    // Đóng tất cả các thẻ với animation tuần tự
+    cardIndices.forEach((index, arrayIndex) => {
+      setTimeout(() => {
+        setCardStates(prev => ({
+          ...prev,
+          [index]: { 
+            ...prev[index], 
+            open: false // Đóng từng thẻ lần lượt
+          }
+        }));
+      }, arrayIndex * 50); // Mỗi thẻ cách nhau 50ms để tạo hiệu ứng animation
+    });
+    
+    setIsGameStarted(false);
+  }, [cardIndices, config.gameMode, stopTimeUpTimer, isWorkerReady]);
+  
+  // Reset inactivity timer (sử dụng Web Worker để tránh throttling)
+  const resetInactivityTimer = useCallback(() => {
+    // Clear existing fallback timer
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+    
+    // Reset remaining time về 30s
+    remainingTimeRef.current = 30000;
+    
+    // Start new timer only if game is started, not in TimeUp mode
+    if (isGameStarted && config.gameMode !== 'timeUp') {
+      if (isWorkerReady && inactivityWorkerRef.current) {
+        // Sử dụng Web Worker (không bị throttling)
+        inactivityWorkerRef.current.postMessage({
+          type: 'RESET_TIMER',
+          payload: { duration: 30000 } // 30 seconds
+        });
+      } else {
+        // Fallback to regular timer nếu worker không sẵn sàng
+        inactivityStartTimeRef.current = Date.now();
+        inactivityTimerRef.current = setTimeout(() => {
+          console.log('🔄 Auto-pausing game due to 30s inactivity (fallback)');
+          isPausedByInactivityRef.current = true;
+          pauseGame();
+        }, 30000);
+      }
+    } else {
+      // Stop Web Worker timer nếu game không đang chạy hoặc là TimeUp mode
+      if (isWorkerReady && inactivityWorkerRef.current) {
+        inactivityWorkerRef.current.postMessage({ type: 'STOP_TIMER' });
+        console.log('⏹️ Inactivity timer stopped - game not started or TimeUp mode');
+      }
+    }
+  }, [isGameStarted, config.gameMode, pauseGame, isWorkerReady]);
+
+  // Track pointer activity (để gọi từ các component khác)
+  const trackPointerActivity = useCallback(() => {
+    // Chỉ reset inactivity timer khi game đang chạy
+    if (isGameStarted && config.gameMode !== 'timeUp') {
+      resetInactivityTimer();
+    } else {
+      console.log('🚫 Pointer activity ignored - game not started or TimeUp mode', { isGameStarted, gameMode: config.gameMode });
+    }
+  }, [isGameStarted, config.gameMode, resetInactivityTimer]);
+  
   // Handle card open changes với logic giới hạn 2 thẻ và disable matched cards
   const handleCardOpenChange = useCallback((cardIndex, newOpen) => {
     // Chỉ reset auto-pause timer khi game chưa bắt đầu và là normal mode
@@ -202,35 +393,48 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       resetAutoPauseTimer();
     }
     
-    // Kiểm tra nếu thẻ đã matched thì không cho phép thay đổi trạng thái
-    const currentCard = cardStates[cardIndex];
-    if (currentCard && currentCard.matched) {
-      return; // Không thực hiện thay đổi nếu thẻ đã matched
-    }
-    
-    // Chỉ áp dụng logic giới hạn khi game đang chạy và đang cố gắng mở thẻ
-    if (isGameStarted && newOpen) {
-      // Đếm số thẻ hiện tại đang mở (không bao gồm thẻ đã matched)
-      const currentOpenCards = Object.values(cardStates).filter(state => state.open && !state.matched).length;
-      
-      // Nếu đã có 2 thẻ mở rồi, không cho phép mở thêm
-      if (currentOpenCards >= 2) {
-        return; // Không thực hiện thay đổi
+    setCardStates(prev => {
+      // Kiểm tra nếu thẻ đã matched thì không cho phép thay đổi trạng thái
+      const currentCard = prev[cardIndex];
+      if (currentCard && currentCard.matched) {
+        return prev; // Không thực hiện thay đổi nếu thẻ đã matched
       }
       
-      // Track click khi mở thẻ trong game
-      trackClick();
-    }
-    
-    setCardStates(prev => ({
-      ...prev,
-      [cardIndex]: {
-        ...prev[cardIndex],
-        open: newOpen
+      // Chỉ áp dụng logic giới hạn khi game đang chạy và đang cố gắng mở thẻ
+      if (isGameStarted && newOpen) {
+        // Đếm số thẻ hiện tại đang mở (không bao gồm thẻ đã matched)
+        const currentOpenCards = Object.values(prev).filter(state => state.open && !state.matched).length;
+        
+        // Nếu đã có 2 thẻ mở rồi, không cho phép mở thêm
+        if (currentOpenCards >= 2) {
+          return prev; // Không thực hiện thay đổi
+        }
+        
+        // Track click khi mở thẻ trong game
+        trackClick();
+        
+        // Reset inactivity timer khi có click vào card
+        resetInactivityTimer();
       }
-    }));
-  }, [cardStates, isGameStarted, resetAutoPauseTimer, config.gameMode, trackClick]);
+      
+      return {
+        ...prev,
+        [cardIndex]: {
+          ...prev[cardIndex],
+          open: newOpen
+        }
+      };
+    });
+  }, [isGameStarted, resetAutoPauseTimer, config.gameMode, trackClick, resetInactivityTimer]); // Removed cardStates from dependencies to prevent infinite loop
   
+  // Cache image URLs to avoid repeated calls
+  const imageUrls = useMemo(() => {
+    return {
+      labelBaseUrl: getImageUrl('label'),
+      valueImgBaseUrl: getImageUrl('valueImg')
+    };
+  }, []); // Empty dependency array - only calculate once
+
   // Hàm tạo random pairs
   const generateRandomPairs = useCallback(() => {
     console.log('🎲 generateRandomPairs called with:', {
@@ -292,10 +496,13 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       
       // Gán giá trị cho từng card
       cardIndices.forEach((index, arrayIndex) => {
+        const cardValue = values[arrayIndex] !== undefined ? values[arrayIndex] : minValue;
         newStates[index] = { 
           ...prevStates[index], 
-          value: values[arrayIndex] !== undefined ? values[arrayIndex] : minValue,
-          matched: false // Reset matched state khi tạo random pairs mới
+          value: cardValue,
+          matched: false, // Reset matched state khi tạo random pairs mới
+          label: imageUrls.labelBaseUrl ? `${imageUrls.labelBaseUrl}_${index}` : null, // label dựa trên index: label_1, label_2, ...
+          valueImg: imageUrls.valueImgBaseUrl ? `${imageUrls.valueImgBaseUrl}_${cardValue}` : null // valueImg dựa trên value: valueImg_4, valueImg_5, ...
         };
       });
       
@@ -303,7 +510,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       
       return newStates;
     });
-  }, [totalCards, cardIndices, minValue, maxValue]);
+  }, [totalCards, cardIndices, minValue, maxValue, imageUrls]);
   
   // Game control functions
   
@@ -320,6 +527,19 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       clearInterval(timeUpTimerRef.current);
       timeUpTimerRef.current = null;
     }
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+    
+    // Stop Web Worker timer
+    if (isWorkerReady && inactivityWorkerRef.current) {
+      inactivityWorkerRef.current.postMessage({ type: 'STOP_TIMER' });
+    }
+    
+    // Reset inactivity timer state
+    remainingTimeRef.current = 30000;
+    inactivityStartTimeRef.current = null;
     
     // Start game session
     startSession(config);
@@ -327,15 +547,20 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     // Force regenerate cardIndices by incrementing restart key
     setGameRestartKey(prev => prev + 1);
     
-    const newStates = {};
-    cardIndices.forEach((index) => {
-      newStates[index] = { 
-        ...cardStates[index], 
-        open: false,
-        matched: false // Reset matched state khi start game
-      };
+    setCardStates(prev => {
+      const newStates = {};
+      cardIndices.forEach((index) => {
+        const cardValue = prev[index]?.value || minValue;
+        newStates[index] = { 
+          ...prev[index], 
+          open: false,
+          matched: false, // Reset matched state khi start game
+          label: imageUrls.labelBaseUrl ? `${imageUrls.labelBaseUrl}_${index}` : null, // label dựa trên index: label_1, label_2, ...
+          valueImg: imageUrls.valueImgBaseUrl ? `${imageUrls.valueImgBaseUrl}_${cardValue}` : null // valueImg dựa trên value: valueImg_4, valueImg_5, ...
+        };
+      });
+      return newStates;
     });
-    setCardStates(newStates);
     setIsGameStarted(true);
     setIsGameWon(false); // Reset game won state
     setIsGameLose(false); // Reset game lose state
@@ -379,29 +604,14 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     // Bắt đầu timer tương ứng với game mode
     if (config.gameMode === 'timeUp') {
       startTimeUpTimer();
+    } else {
+      // Start inactivity timer cho normal mode
+      resetInactivityTimer();
     }
     // Không gọi resetAutoPauseTimer khi game started = true
-  }, [cardIndices, cardStates, config, startSession, config.gameMode, startTimeUpTimer, setIsGameStarted, setIsGameWon, setIsGameLose, setCardStates, setGameRestartKey]);
+  }, [cardIndices, config, startSession, config.gameMode, startTimeUpTimer, resetInactivityTimer, setIsGameStarted, setIsGameWon, setIsGameLose, setCardStates, setGameRestartKey, isWorkerReady, imageUrls, minValue]); // Removed cardStates from dependencies to prevent infinite loop
   
-  // Pause game
-  const pauseGame = useCallback(() => {
-    // Clear timers khi pause manual
-    if (autoPauseTimerRef.current) {
-      clearTimeout(autoPauseTimerRef.current);
-      autoPauseTimerRef.current = null;
-    }
-    
-    if (config.gameMode === 'timeUp') {
-      stopTimeUpTimer();
-    }
-    
-    const newStates = {};
-    cardIndices.forEach((index) => {
-      newStates[index] = { ...cardStates[index], open: true };
-    });
-    setCardStates(newStates);
-    setIsGameStarted(false);
-  }, [cardIndices, cardStates, config.gameMode, stopTimeUpTimer]);
+
   
   // Toggle game state (start/pause)
   const toggleGameState = useCallback(() => {
@@ -419,47 +629,56 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
   
   // Set sequential values
   const setSequentialValues = useCallback(() => {
-    const newStates = {};
-    cardIndices.forEach((index) => {
-      newStates[index] = { 
-        value: index + 1, 
-        open: true,
-        matched: false // Reset matched state
-      };
+    setCardStates(prev => {
+      const newStates = {};
+      cardIndices.forEach((index) => {
+        newStates[index] = { 
+          ...prev[index],
+          value: index + 1, 
+          open: true,
+          matched: false // Reset matched state
+        };
+      });
+      return newStates;
     });
-    setCardStates(newStates);
   }, [cardIndices]);
   
   // Open all cards
   const openAllCards = useCallback(() => {
-    const newStates = {};
-    cardIndices.forEach((index) => {
-      newStates[index] = { ...cardStates[index], open: true };
+    setCardStates(prev => {
+      const newStates = {};
+      cardIndices.forEach((index) => {
+        newStates[index] = { ...prev[index], open: true };
+      });
+      return newStates;
     });
-    setCardStates(newStates);
-  }, [cardIndices, cardStates]);
+  }, [cardIndices]);
   
   // Close all cards
   const closeAllCards = useCallback(() => {
-    const newStates = {};
-    cardIndices.forEach((index) => {
-      newStates[index] = { ...cardStates[index], open: false };
+    setCardStates(prev => {
+      const newStates = {};
+      cardIndices.forEach((index) => {
+        newStates[index] = { ...prev[index], open: false };
+      });
+      return newStates;
     });
-    setCardStates(newStates);
-  }, [cardIndices, cardStates]);
+  }, [cardIndices]);
   
   // Reset all values
   const resetAllValues = useCallback(() => {
-    const newStates = {};
-    cardIndices.forEach((index) => {
-      newStates[index] = { 
-        ...cardStates[index], 
-        value: 0,
-        matched: false // Reset matched state
-      };
+    setCardStates(prev => {
+      const newStates = {};
+      cardIndices.forEach((index) => {
+        newStates[index] = { 
+          ...prev[index], 
+          value: 0,
+          matched: false // Reset matched state
+        };
+      });
+      return newStates;
     });
-    setCardStates(newStates);
-  }, [cardIndices, cardStates]);
+  }, [cardIndices]);
   
   // Debug function
   const copyDebugData = useCallback(() => {
@@ -555,7 +774,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
         }
       }
     }
-  }, [twoCardOpen, isGameStarted, cardStates, trackMatch]);
+  }, [twoCardOpen, isGameStarted, cardStates]); // Removed trackMatch from dependencies to prevent infinite loop
   
   // Cập nhật trạng thái game thắng
   useEffect(() => {
@@ -565,7 +784,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     if (gameWonStatus && isSessionActive) {
       endSession(true); // true = completed
     }
-  }, [gameWonStatus, isSessionActive, endSession]);
+  }, [gameWonStatus, isSessionActive]); // Removed endSession from dependencies to prevent infinite loop
   
   // Effect để cleanup timer khi component unmount
   useEffect(() => {
@@ -575,6 +794,13 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       }
       if (timeUpTimerRef.current) {
         clearInterval(timeUpTimerRef.current);
+      }
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+      // Terminate Web Worker
+      if (inactivityWorkerRef.current) {
+        inactivityWorkerRef.current.terminate();
       }
     };
   }, []);
@@ -598,12 +824,26 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
         timeUpTimerRef.current = null;
       }
       
-      // Bắt đầu auto-pause timer khi game dừng (chỉ cho normal mode)
-      if (config.gameMode === 'normal') {
-        resetAutoPauseTimer();
+      // Stop Web Worker timer khi game dừng
+      if (isWorkerReady && inactivityWorkerRef.current) {
+        inactivityWorkerRef.current.postMessage({ type: 'STOP_TIMER' });
       }
+      
+      // Bắt đầu auto-pause timer khi game dừng (chỉ cho normal mode)
+       // NHƯNG không start nếu game vừa bị auto-pause bởi inactivity timer
+       if (config.gameMode === 'normal' && !isGameWon && !isPausedByInactivityRef.current) {
+         // Delay nhỏ để tránh conflict với inactivity timer
+         setTimeout(() => {
+           resetAutoPauseTimer();
+         }, 100);
+       }
+       
+       // Reset flag sau khi xử lý
+       if (isPausedByInactivityRef.current) {
+         isPausedByInactivityRef.current = false;
+       }
     }
-  }, [isGameStarted, resetAutoPauseTimer, config.gameMode, startTimeUpTimer]);
+  }, [isGameStarted, resetAutoPauseTimer, config.gameMode, startTimeUpTimer, isWorkerReady, isGameWon]);
   
   // Effect để check game lose khi hết thời gian trong TimeUp mode
   useEffect(() => {
@@ -659,6 +899,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     resetAutoPauseTimer,
     startTimeUpTimer,
     stopTimeUpTimer,
+    trackPointerActivity, // Thêm hàm để track pointer activity
     
     // Game session
     currentSession,

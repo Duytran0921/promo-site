@@ -25,7 +25,8 @@ const Match2Foreground = React.memo(({
   gameMode = 'Default',
   twoCardOpenNoMatch = false, // Thêm prop mới
   twoCardOpenAndMatch = false, // Thêm prop mới
-  timer = 0
+  timer = 0,
+  onPointerActivity = null
 }) => {
   const { rive, RiveComponent } = useRive({
     src: '/assets/animation/match_2_fg.riv',
@@ -79,6 +80,11 @@ const Match2Foreground = React.memo(({
       // Kiểm tra pointer events
       if (!pointerEventsEnabled) {
         return;
+      }
+      
+      // Track pointer activity
+      if (onPointerActivity) {
+        onPointerActivity();
       }
       
       // Logic giống hệt Control Panel
@@ -160,9 +166,17 @@ const Match2Foreground = React.memo(({
   }, [timer, setTimer]);
 
   return (
-    <div className={`absolute inset-0 w-full h-full overflow-hidden rounded-lg z-20 ${
-      pointerEventsEnabled && !isUpdatingCardStates ? 'pointer-events-auto' : 'pointer-events-none'
-    }`} style={{ left: 0, right: 0, top: 0, bottom: 0 }}>
+    <div 
+      className={`absolute inset-0 w-full h-full overflow-hidden rounded-lg z-20 ${
+        pointerEventsEnabled && !isUpdatingCardStates ? 'pointer-events-auto' : 'pointer-events-none'
+      }`} 
+      style={{ left: 0, right: 0, top: 0, bottom: 0 }}
+      onPointerDown={() => {
+        if (pointerEventsEnabled && !isUpdatingCardStates && onPointerActivity) {
+          onPointerActivity();
+        }
+      }}
+    >
       {RiveComponent && (
         <RiveComponent 
           

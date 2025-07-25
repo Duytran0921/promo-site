@@ -6,6 +6,7 @@ import {
   useViewModelInstance,
   useViewModelInstanceNumber,
   useViewModelInstanceBoolean,
+  useViewModelInstanceImage,
   Layout,
   Fit,
   Alignment
@@ -24,6 +25,10 @@ const DynamicCard = React.memo(({
   twoCardOpenNoMatch = false, // Thêm prop mới
   twoCardOpenAndMatch = false, // Thêm prop mới
   startRestartAnimation = false, // Thêm prop mới cho START/RESTART animation
+  label = null, // Thêm prop mới cho image URL
+  labelOn = false, // Thêm prop mới cho boolean
+  valueImg = null, // Thêm prop mới cho image URL
+  valueImgOn = false, // Thêm prop mới cho boolean
   style = {}
 }) => {
   const { rive, RiveComponent } = useRive({
@@ -50,6 +55,10 @@ const DynamicCard = React.memo(({
   const { setValue: setTwoCardOpenNoMatch } = useViewModelInstanceBoolean('twoCardOpenNoMatch', cardInstance);
   const { setValue: setTwoCardOpenAndMatch } = useViewModelInstanceBoolean('twoCardOpenAndMatch', cardInstance);
   const { setValue: setStartRestartAnimation } = useViewModelInstanceBoolean('startRestartAnimation', cardInstance);
+  const { setValue: setLabel } = useViewModelInstanceImage('label', cardInstance);
+  const { setValue: setLabelOn } = useViewModelInstanceBoolean('labelOn', cardInstance);
+  const { setValue: setValueImg } = useViewModelInstanceImage('valueImg', cardInstance);
+  const { setValue: setValueImgOn } = useViewModelInstanceBoolean('valueImgOn', cardInstance);
   
   // Chỉ đồng bộ một chiều: external state -> Rive (single source of truth)
   React.useEffect(() => {
@@ -96,6 +105,34 @@ const DynamicCard = React.memo(({
       setStartRestartAnimation(startRestartAnimation);
     }
   }, [startRestartAnimation, setStartRestartAnimation]);
+  
+  // Đồng bộ label từ React state vào Rive
+  React.useEffect(() => {
+    if (label !== null && setLabel) {
+      setLabel(label);
+    }
+  }, [label, setLabel]);
+  
+  // Đồng bộ labelOn từ React state vào Rive
+  React.useEffect(() => {
+    if (labelOn !== undefined && setLabelOn) {
+      setLabelOn(labelOn);
+    }
+  }, [labelOn, setLabelOn]);
+  
+  // Đồng bộ valueImg từ React state vào Rive
+  React.useEffect(() => {
+    if (valueImg !== null && setValueImg) {
+      setValueImg(valueImg);
+    }
+  }, [valueImg, setValueImg]);
+  
+  // Đồng bộ valueImgOn từ React state vào Rive
+  React.useEffect(() => {
+    if (valueImgOn !== undefined && setValueImgOn) {
+      setValueImgOn(valueImgOn);
+    }
+  }, [valueImgOn, setValueImgOn]);
   
   // Chỉ khởi tạo state ban đầu từ Rive một lần duy nhất
   const [initialized, setInitialized] = React.useState(false);
