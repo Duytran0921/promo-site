@@ -48,7 +48,7 @@ const StandaloneMatch2Game = React.forwardRef(({
     twoCardOpenNoMatch, // Thêm trạng thái mới
     twoCardOpenAndMatch, // Thêm trạng thái mới
     startRestartAnimation, // Thêm trạng thái animation cho START/RESTART
-    timeUpTimer,
+
     handleCardValueChange,
     handleCardOpenChange,
     generateRandomPairs,
@@ -60,9 +60,7 @@ const StandaloneMatch2Game = React.forwardRef(({
     closeAllCards,
     resetAllValues,
     copyDebugData,
-    resetAutoPauseTimer,
-    startTimeUpTimer,
-    stopTimeUpTimer,
+    resetUnifiedInactivityTimer,
     trackPointerActivity,
     // Game session
     currentSession,
@@ -75,10 +73,9 @@ const StandaloneMatch2Game = React.forwardRef(({
   // Handle pointer enter để reset auto-pause timer và inactivity timer
   const handlePointerEnter = useCallback(() => {
     if (isGameStarted) {
-      resetAutoPauseTimer();
-      trackPointerActivity(); // Reset inactivity timer
+      resetUnifiedInactivityTimer(); // Reset inactivity timer
     }
-  }, [isGameStarted, resetAutoPauseTimer, trackPointerActivity]);
+  }, [isGameStarted, resetUnifiedInactivityTimer]);
   
   // Callback effects
   React.useEffect(() => {
@@ -116,14 +113,9 @@ const StandaloneMatch2Game = React.forwardRef(({
   
   // Timer effect để sync với Rive
   React.useEffect(() => {
-    if (config.gameMode === 'timeUp') {
-      // Cho TimeUp mode, sử dụng timeUpTimer
-      setTimer(timeUpTimer);
-    } else {
-      // Cho normal mode, timer sẽ không được truyền vào Rive nữa
-      setTimer(0); // Luôn set về 0 cho normal mode
-    }
-  }, [timeUpTimer, config.gameMode]);
+    // Cho normal mode, timer sẽ không được truyền vào Rive nữa
+    setTimer(0); // Luôn set về 0 cho normal mode
+  }, [config.gameMode]);
 
   // Expose game state through ref
   React.useImperativeHandle(ref, () => ({
@@ -137,7 +129,6 @@ const StandaloneMatch2Game = React.forwardRef(({
       twoCardOpenNoMatch, // Thêm trạng thái mới
       twoCardOpenAndMatch, // Thêm trạng thái mới
       startRestartAnimation, // Thêm trạng thái animation cho START/RESTART
-      timeUpTimer,
       totalCards
     }),
     getSessionData: () => ({
@@ -146,22 +137,25 @@ const StandaloneMatch2Game = React.forwardRef(({
       sessionHistory,
       getSessionStats: getSessionStats()
     })
-  }), [config, cardStates, isGameStarted, isGameWon, isGameLose, twoCardOpen, twoCardOpenNoMatch, twoCardOpenAndMatch, startRestartAnimation, timeUpTimer, totalCards, currentSession, isSessionActive, sessionHistory, getSessionStats]);
+  }), [config, cardStates, isGameStarted, isGameWon, isGameLose, twoCardOpen, twoCardOpenNoMatch, twoCardOpenAndMatch, startRestartAnimation, totalCards, currentSession, isSessionActive, sessionHistory, getSessionStats]);
   
   return (
     <div 
       className={`relative overflow-hidden w-full flex items-center justify-center ${className}`}
       style={{
-        height: `${config.cardHeight * rows + config.cardGap * (rows - 1) + 100}px`,
+        height: `${config.cardHeight * rows + config.cardGap * (rows - 1) + 120}px`,
         minWidth: '500px',
         minHeight: '200px',
         ...containerStyle,
         ...style
       }}
       onPointerEnter={config.enablePointerEvents ? handlePointerEnter : undefined}
+      onPointerMove={config.enablePointerEvents ? resetUnifiedInactivityTimer : undefined}
+      onPointerDown={config.enablePointerEvents ? resetUnifiedInactivityTimer : undefined}
+      onKeyDown={config.enablePointerEvents ? resetUnifiedInactivityTimer : undefined}
     >
       {/* Game Container với absolute positioning */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden rounded-lg z-20 pointer-events-auto ">
+      <div className="absolute inset-0 w-full h-full overflow-hidden z-20 pointer-events-auto ">
         {/* Rive Background */}
         <Match2Background 
           isGameWon={isGameWon} 

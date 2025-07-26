@@ -167,7 +167,7 @@ const Match2Foreground = React.memo(({
 
   return (
     <div 
-      className={`absolute inset-0 w-full h-full overflow-hidden rounded-lg z-20 ${
+      className={`absolute inset-0 w-full h-full overflow-hidden z-20 ${
         pointerEventsEnabled && !isUpdatingCardStates ? 'pointer-events-auto' : 'pointer-events-none'
       }`} 
       style={{ left: 0, right: 0, top: 0, bottom: 0 }}
