@@ -24,7 +24,9 @@ const ControlPanel = ({
   // Config persistence props
   saveConfig,
   configLoaded,
-  lastSavedConfig
+  lastSavedConfig,
+  // Config object for labelOn and valueImgOn
+  config = { labelOn: false, valueImgOn: false }
 }) => {
   return (
     <div className="w-full border-2 border-blue-500 rounded-lg bg-blue-50">

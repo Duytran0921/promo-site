@@ -178,6 +178,7 @@ const StandaloneMatch2Game = React.forwardRef(({
               className={`grid gap-1 ${
                 pointerEventsMode === 'cards' && config.enablePointerEvents ? 'pointer-events-auto' : 'pointer-events-none'
               }`}
+              //card grid
               style={{ 
                 gridTemplateColumns: `repeat(${cols}, 1fr)`,
                 gridTemplateRows: `repeat(${rows}, 1fr)`,

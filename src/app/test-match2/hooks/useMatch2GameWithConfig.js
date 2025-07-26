@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { defaultConfig, validateGameConfig } from '../configs/gameConfig';
-import { getImageUrl } from '../configs/imageConfig';
+import { getImageUrl, getLabelUrl, getValueImgUrl } from '../configs/imageConfig';
 import { useGameSession } from './useGameSession';
 
 /**
@@ -60,7 +60,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
   // Page visibility state để xử lý timer throttling khi tab inactive
   const [isPageVisible, setIsPageVisible] = useState(true);
   const inactivityStartTimeRef = useRef(null); // Lưu thời điểm bắt đầu timer
-  const remainingTimeRef = useRef(30000); // Thời gian còn lại của timer (mặc định 30s)
+  const remainingTimeRef = useRef(8000); // Thời gian còn lại của timer (mặc định 30s)
   const isPausedByInactivityRef = useRef(false); // Flag để theo dõi xem game có bị pause bởi inactivity timer không
   
   // Web Worker setup để xử lý inactivity timer không bị throttling
@@ -314,7 +314,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     }
     
     // Reset inactivity timer state
-    remainingTimeRef.current = 30000;
+    remainingTimeRef.current = 8000;
     inactivityStartTimeRef.current = null;
     isPausedByInactivityRef.current = false; // Reset flag khi start game
     
@@ -347,7 +347,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     }
     
     // Reset remaining time về 30s
-    remainingTimeRef.current = 30000;
+    remainingTimeRef.current = 8000;
     
     // Start new timer only if game is started, not in TimeUp mode
     if (isGameStarted && config.gameMode !== 'timeUp') {
@@ -355,7 +355,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
         // Sử dụng Web Worker (không bị throttling)
         inactivityWorkerRef.current.postMessage({
           type: 'RESET_TIMER',
-          payload: { duration: 30000 } // 30 seconds
+          payload: { duration: 8000 } // 30 seconds
         });
       } else {
         // Fallback to regular timer nếu worker không sẵn sàng
@@ -364,7 +364,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
           console.log('🔄 Auto-pausing game due to 30s inactivity (fallback)');
           isPausedByInactivityRef.current = true;
           pauseGame();
-        }, 30000);
+        }, 8000);
       }
     } else {
       // Stop Web Worker timer nếu game không đang chạy hoặc là TimeUp mode
@@ -435,6 +435,25 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     };
   }, []); // Empty dependency array - only calculate once
 
+  // Cache individual URLs to avoid repeated calls to getLabelUrl and getValueImgUrl
+  const cachedLabelUrls = useMemo(() => {
+    const cache = {};
+    // Pre-cache label URLs for all possible card indices
+    for (let i = 0; i < rows * cols; i++) {
+      cache[i] = getLabelUrl(i);
+    }
+    return cache;
+  }, [rows, cols]); // Recalculate when grid size changes
+
+  const cachedValueImgUrls = useMemo(() => {
+    const cache = {};
+    // Pre-cache value image URLs for all possible values
+    for (let value = minValue; value <= maxValue; value++) {
+      cache[value] = getValueImgUrl(value);
+    }
+    return cache;
+  }, [minValue, maxValue]); // Recalculate when value range changes
+
   // Hàm tạo random pairs
   const generateRandomPairs = useCallback(() => {
     console.log('🎲 generateRandomPairs called with:', {
@@ -501,8 +520,8 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
           ...prevStates[index], 
           value: cardValue,
           matched: false, // Reset matched state khi tạo random pairs mới
-          label: imageUrls.labelBaseUrl ? `${imageUrls.labelBaseUrl}_${index}` : null, // label dựa trên index: label_1, label_2, ...
-          valueImg: imageUrls.valueImgBaseUrl ? `${imageUrls.valueImgBaseUrl}_${cardValue}` : null // valueImg dựa trên value: valueImg_4, valueImg_5, ...
+          label: config.labelOn ? (cachedLabelUrls[index] || null) : null, // Chỉ set label khi labelOn = true
+          valueImg: config.valueImgOn ? (cachedValueImgUrls[cardValue] || null) : null // Chỉ set valueImg khi valueImgOn = true
         };
       });
       
@@ -510,7 +529,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       
       return newStates;
     });
-  }, [totalCards, cardIndices, minValue, maxValue, imageUrls]);
+  }, [totalCards, cardIndices, minValue, maxValue, cachedLabelUrls, cachedValueImgUrls, config]);
   
   // Game control functions
   
@@ -538,7 +557,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     }
     
     // Reset inactivity timer state
-    remainingTimeRef.current = 30000;
+    remainingTimeRef.current = 8000;
     inactivityStartTimeRef.current = null;
     
     // Start game session
@@ -555,8 +574,8 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
           ...prev[index], 
           open: false,
           matched: false, // Reset matched state khi start game
-          label: imageUrls.labelBaseUrl ? `${imageUrls.labelBaseUrl}_${index}` : null, // label dựa trên index: label_1, label_2, ...
-          valueImg: imageUrls.valueImgBaseUrl ? `${imageUrls.valueImgBaseUrl}_${cardValue}` : null // valueImg dựa trên value: valueImg_4, valueImg_5, ...
+          label: config.labelOn ? (cachedLabelUrls[index] || null) : null, // Chỉ set label khi labelOn = true
+          valueImg: config.valueImgOn ? (cachedValueImgUrls[cardValue] || null) : null // Chỉ set valueImg khi valueImgOn = true
         };
       });
       return newStates;
@@ -609,7 +628,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       resetInactivityTimer();
     }
     // Không gọi resetAutoPauseTimer khi game started = true
-  }, [cardIndices, config, startSession, config.gameMode, startTimeUpTimer, resetInactivityTimer, setIsGameStarted, setIsGameWon, setIsGameLose, setCardStates, setGameRestartKey, isWorkerReady, imageUrls, minValue]); // Removed cardStates from dependencies to prevent infinite loop
+  }, [cardIndices, config, startSession, config.gameMode, startTimeUpTimer, resetInactivityTimer, setIsGameStarted, setIsGameWon, setIsGameLose, setCardStates, setGameRestartKey, isWorkerReady, cachedLabelUrls, cachedValueImgUrls, minValue]); // Removed cardStates from dependencies to prevent infinite loop
   
 
   

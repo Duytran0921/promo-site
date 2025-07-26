@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useCallback, useEffect } from 'react';
-import { useMatch2Game } from '../useMatch2Game';
+import { useMatch2GameWithConfig } from '../hooks/useMatch2GameWithConfig';
 import { getGameConfig } from '../configs/gameConfig';
 import Match2Background from './Match2Background';
 import Match2Foreground from './Match2Foreground';
@@ -30,25 +30,14 @@ const SimpleMatch2Game = React.forwardRef(({
   // Timer state để truyền vào Rive
   const [timer, setTimer] = useState(gameConfig.autoPauseTimer / 1000);
   
-  // Sử dụng useMatch2Game với config values
+  // Sử dụng useMatch2GameWithConfig với config được truyền vào
   const {
     // Game configuration
+    config,
     rows,
     cols,
-    setRows,
-    setCols,
     totalCards,
     cardIndices,
-    
-    // Game mode configuration
-    gameMode,
-    setGameMode,
-    
-    // Random value configuration
-    minValue,
-    maxValue,
-    setMinValue,
-    setMaxValue,
     
     // Game state
     cardStates,
@@ -62,7 +51,8 @@ const SimpleMatch2Game = React.forwardRef(({
     
     // Game control
     generateRandomPairs,
-    toggleGameState,
+    startGame,
+    pauseGame,
     
     // Quick actions
     setSequentialValues,
@@ -72,27 +62,20 @@ const SimpleMatch2Game = React.forwardRef(({
     
     // Debug
     copyDebugData
-  } = useMatch2Game();
+  } = useMatch2GameWithConfig(gameConfig);
   
-  // Initialize game with config values
-  useEffect(() => {
-    setRows(gameConfig.rows);
-    setCols(gameConfig.cols);
-    setMinValue(gameConfig.minValue);
-    setMaxValue(gameConfig.maxValue);
-    setGameMode(gameConfig.gameMode || 'Default');
-  }, [gameConfig, setRows, setCols, setMinValue, setMaxValue, setGameMode]);
+  // Config is automatically handled by useMatch2GameWithConfig
   
   // Auto start if configured
   useEffect(() => {
     if (gameConfig.autoStart && !isGameStarted) {
       const timer = setTimeout(() => {
         generateRandomPairs();
-        toggleGameState();
+        startGame();
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [gameConfig.autoStart, isGameStarted, generateRandomPairs, toggleGameState]);
+  }, [gameConfig.autoStart, isGameStarted, generateRandomPairs, startGame]);
   
   // Handle pointer enter
   const handlePointerEnter = useCallback(() => {
@@ -196,6 +179,11 @@ const SimpleMatch2Game = React.forwardRef(({
                   isGameStarted={isGameStarted}
                   cardStates={cardStates}
                   pointerEventsEnabled={pointerEventsMode === 'cards' && gameConfig.enablePointerEvents}
+                  // Image props từ config và cardState
+                  label={cardStates[cardIndex]?.label || null}
+                  labelOn={gameConfig.labelOn || false}
+                  valueImg={cardStates[cardIndex]?.valueImg || null}
+                  valueImgOn={gameConfig.valueImgOn || false}
                   style={{
                     // width: '160px',
                     // height: '220px',
@@ -211,10 +199,10 @@ const SimpleMatch2Game = React.forwardRef(({
         {/* Rive Foreground */}
         <Match2Foreground 
           isGameWon={isGameWon} 
-          isGameLose={false} // useMatch2Game không có isGameLose
+          isGameLose={false} // useMatch2GameWithConfig không có isGameLose
           gameStarted={isGameStarted}
           pointerEventsEnabled={pointerEventsMode === 'foreground' && gameConfig.enablePointerEvents}
-          toggleGameState={toggleGameState}
+          toggleGameState={isGameStarted ? pauseGame : startGame}
           timer={timer}
           gameMode={gameConfig.gameMode}
         />

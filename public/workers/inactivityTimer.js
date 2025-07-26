@@ -3,7 +3,7 @@
 
 let timerId = null;
 let startTime = null;
-let duration = 30000; // 30 seconds
+let duration = 8000; // 8 seconds
 let isPaused = false;
 let remainingTime = duration;
 

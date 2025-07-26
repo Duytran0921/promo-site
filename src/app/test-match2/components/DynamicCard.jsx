@@ -9,7 +9,8 @@ import {
   useViewModelInstanceImage,
   Layout,
   Fit,
-  Alignment
+  Alignment,
+  decodeImage
 } from '@rive-app/react-webgl2';
 
 // Dynamic Card Component
@@ -35,11 +36,11 @@ const DynamicCard = React.memo(({
     src: '/assets/animation/match_2_card.riv',
     stateMachines: ['State Machine 1'],
     autoplay: true,
-    fit: 'contain',
-    // layout: new Layout({
-    //   fit: Fit.Contain,
-    //   alignment: Alignment.Center,
-    // }),
+    // fit: 'contain',
+    layout: new Layout({
+      fit: Fit.Contain,
+      alignment: Alignment.Center,
+    }),
     onLoad: () => console.log(`Match 2 Card Rive ${cardIndex} loaded`),
   });
 
@@ -106,12 +107,42 @@ const DynamicCard = React.memo(({
     }
   }, [startRestartAnimation, setStartRestartAnimation]);
   
-  // Đồng bộ label từ React state vào Rive
+  // Đồng bộ label từ React state vào Rive - chỉ khi labelOn = true
   React.useEffect(() => {
-    if (label !== null && setLabel) {
-      setLabel(label);
-    }
-  }, [label, setLabel]);
+    const loadAndSetLabel = async () => {
+      if (label !== null && setLabel && labelOn) {
+        try {
+          console.log(`🎯 DynamicCard[${cardIndex}] loading label: ${label} (labelOn: ${labelOn})`);
+          
+          // Fetch image and convert to arrayBuffer
+          const response = await fetch(label);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch label image: ${response.status}`);
+          }
+          
+          const imageBuffer = await response.arrayBuffer();
+          
+          // Decode the image from the response
+          const decodedImage = await decodeImage(new Uint8Array(imageBuffer));
+          setLabel(decodedImage);
+          
+          // Clean up the decoded image
+          decodedImage.unref();
+          
+          console.log(`✅ DynamicCard[${cardIndex}] successfully set label`);
+        } catch (error) {
+          console.error(`❌ DynamicCard[${cardIndex}] Failed to load label:`, error);
+          // Set null on error
+          setLabel(null);
+        }
+      } else if (setLabel && !labelOn) {
+        console.log(`🎯 DynamicCard[${cardIndex}] clearing label because labelOn is false`);
+        setLabel(null);
+      }
+    };
+    
+    loadAndSetLabel();
+  }, [label, setLabel, cardIndex, labelOn]);
   
   // Đồng bộ labelOn từ React state vào Rive
   React.useEffect(() => {
@@ -120,12 +151,44 @@ const DynamicCard = React.memo(({
     }
   }, [labelOn, setLabelOn]);
   
-  // Đồng bộ valueImg từ React state vào Rive
+  // Đồng bộ valueImg từ React state vào Rive - chỉ khi valueImgOn = true
   React.useEffect(() => {
-    if (valueImg !== null && setValueImg) {
-      setValueImg(valueImg);
-    }
-  }, [valueImg, setValueImg]);
+    console.log(`🔍 DynamicCard[${cardIndex}] valueImg effect: valueImg=${valueImg}, valueImgOn=${valueImgOn}`);
+    
+    const loadAndSetImage = async () => {
+      if (valueImg !== null && setValueImg && valueImgOn) {
+        try {
+          console.log(`🎯 DynamicCard[${cardIndex}] loading valueImg: ${valueImg} (valueImgOn: ${valueImgOn})`);
+          
+          // Fetch image and convert to arrayBuffer
+          const response = await fetch(valueImg);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.status}`);
+          }
+          
+          const imageBuffer = await response.arrayBuffer();
+          
+          // Decode the image from the response
+          const decodedImage = await decodeImage(new Uint8Array(imageBuffer));
+          setValueImg(decodedImage);
+          
+          // Clean up the decoded image
+          decodedImage.unref();
+          
+          console.log(`✅ DynamicCard[${cardIndex}] successfully set valueImg`);
+        } catch (error) {
+          console.error(`❌ DynamicCard[${cardIndex}] Failed to load valueImg:`, error);
+          // Set null on error
+          setValueImg(null);
+        }
+      } else if (setValueImg && !valueImgOn) {
+        console.log(`🎯 DynamicCard[${cardIndex}] clearing valueImg because valueImgOn is false`);
+        setValueImg(null);
+      }
+    };
+    
+    loadAndSetImage();
+  }, [valueImg, setValueImg, cardIndex, valueImgOn]);
   
   // Đồng bộ valueImgOn từ React state vào Rive
   React.useEffect(() => {

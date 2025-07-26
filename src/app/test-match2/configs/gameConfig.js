@@ -16,7 +16,7 @@ export const defaultConfig = {
   gameMode: 'normal', // 'normal' or 'timeUp'
   timeUpDuration: 30000, // 30 seconds for timeUp mode
   // UI configuration
-  cardGap: 4,
+  cardGap: 1,
   cardWidth: 128, // Width of each card in pixels
   cardHeight: 176, // Height of each card in pixels
   // Game behavior
@@ -101,14 +101,14 @@ export const bannerConfig = {
   autoPauseTimer: 8000, // 8 seconds
   gameMode: 'normal',
   timeUpDuration: 25000, // 25 seconds for timeUp mode
-  cardGap: 2,
-  cardWidth: 160, // Width of each card in pixels
-  cardHeight: 220, // Height of each card in pixels
+  cardGap: 0,
+  cardWidth: 128, // Width of each card in pixels
+  cardHeight: 176, // Height of each card in pixels
   autoStart: false,
   showTimer: false, // No timer display in hard mode
   enablePointerEvents: true,
   // Card image configuration
-  labelOn: false, // Boolean to show/hide label
+  labelOn: true, // Boolean to show/hide label
   valueImgOn: false // Boolean to show/hide value image
 };
 
@@ -137,6 +137,28 @@ export const timeUpHardConfig = {
   showTimer: true
 };
 
+// Test config with images enabled
+export const testImageConfig = {
+  id: 'testImage',
+  name: 'Test Image Mode',
+  rows: 2,
+  cols: 2,
+  minValue: 1,
+  maxValue: 2,
+  autoPauseTimer: 15000, // 15 seconds
+  gameMode: 'normal',
+  timeUpDuration: 45000, // 45 seconds for timeUp mode
+  cardGap: 4,
+  cardWidth: 128, // Width of each card in pixels
+  cardHeight: 176, // Height of each card in pixels
+  autoStart: false,
+  showTimer: true,
+  enablePointerEvents: true,
+  // Card image configuration - ENABLED for testing
+  labelOn: true, // Boolean to show/hide label
+  valueImgOn: true // Boolean to show/hide value image
+};
+
 // Export all configs
 export const gameConfigs = {
   default: defaultConfig,
@@ -146,7 +168,8 @@ export const gameConfigs = {
   banner: bannerConfig,
   timeUpEasy: timeUpEasyConfig,
   timeUpMedium: timeUpMediumConfig,
-  timeUpHard: timeUpHardConfig
+  timeUpHard: timeUpHardConfig,
+  testImage: testImageConfig
 };
 
 // Helper function to get config by id

@@ -18,6 +18,7 @@ const TestMatch2Page = () => {
   // Sử dụng custom hook để quản lý toàn bộ logic game
   const {
     // Game configuration
+    config,
     rows,
     cols,
     setRows,
@@ -127,6 +128,8 @@ const TestMatch2Page = () => {
           saveConfig={saveConfig}
           configLoaded={configLoaded}
           lastSavedConfig={lastSavedConfig}
+          // Config object for labelOn and valueImgOn
+          config={config}
         />
          
         {/* Quick Actions */}

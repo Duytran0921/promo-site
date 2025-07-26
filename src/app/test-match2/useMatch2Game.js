@@ -684,9 +684,16 @@ export const useMatch2Game = (initialRows = 2, initialCols = 2) => {
   
 
   
+  // Create config object for compatibility
+  const config = {
+    labelOn: false, // Default value for basic useMatch2Game
+    valueImgOn: false // Default value for basic useMatch2Game
+  };
+
   // Return all game state and functions
   return {
     // Game configuration
+    config,
     rows,
     cols,
     setRows,
