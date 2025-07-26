@@ -89,10 +89,38 @@ const StandaloneMatch2Game = React.forwardRef(({
   
   const topScore = React.useMemo(() => {
     if (!sessionHistory || sessionHistory.length === 0) return 0;
-    return Math.max(...sessionHistory.map(session => 
-      session.scoring?.finalScore || session.scoring?.totalScore || 0
-    ));
+    return Math.max(...sessionHistory.map(session => {
+      // Ưu tiên finalScore chỉ khi session đã hoàn thành và có finalScore > 0
+      if (session.completed && session.scoring?.finalScore > 0) {
+        return session.scoring.finalScore;
+      }
+      // Nếu không, sử dụng totalScore
+      return session.scoring?.totalScore || 0;
+    }));
   }, [sessionHistory]);
+  
+  // Debug function để kiểm tra sessionHistory (chỉ khi cần debug)
+  // React.useEffect(() => {
+  //   if (sessionHistory && sessionHistory.length > 0) {
+  //     console.log('📊 Session History Debug:', sessionHistory.map(session => ({
+  //       sessionId: session.sessionId,
+  //       completed: session.completed,
+  //       totalScore: session.scoring?.totalScore,
+  //       finalScore: session.scoring?.finalScore,
+  //       matchedPairs: session.gameplay?.matchedPairs,
+  //       totalPairs: Math.floor(session.config?.totalCards / 2)
+  //     })));
+  //     
+  //     const scores = sessionHistory.map(session => {
+  //       if (session.completed && session.scoring?.finalScore > 0) {
+  //         return session.scoring.finalScore;
+  //       }
+  //       return session.scoring?.totalScore || 0;
+  //     });
+  //     console.log('📊 All scores for top calculation:', scores);
+  //     console.log('📊 Calculated top score:', Math.max(...scores));
+  //   }
+  // }, [sessionHistory]);
   
   // Ref để track điểm số trước khi session bị xóa
   const previousScoreRef = React.useRef(0);

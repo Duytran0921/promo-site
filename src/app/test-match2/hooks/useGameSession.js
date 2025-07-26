@@ -20,18 +20,56 @@ export const useGameSession = () => {
   const startTimeRef = useRef(null);
   const currentSessionRef = useRef(null); // Add ref to track current session
   
+  // Validate và clean up session data
+  const validateSession = (session) => {
+    if (!session || typeof session !== 'object') return null;
+    if (!session.sessionId || !session.scoring) return null;
+    
+    // Đảm bảo scoring có các field cần thiết
+    const scoring = {
+      totalScore: session.scoring.totalScore || 0,
+      finalScore: session.scoring.finalScore || 0,
+      matchScore: session.scoring.matchScore || 0
+    };
+    
+    // Nếu session completed nhưng không có finalScore, tính lại
+    if (session.completed && scoring.finalScore === 0 && scoring.totalScore > 0) {
+      scoring.finalScore = Math.floor(scoring.totalScore * 1.2); // 20% bonus
+    }
+    
+    return {
+      ...session,
+      scoring,
+      completed: Boolean(session.completed)
+    };
+  };
+
   // Load session history từ localStorage
   const loadSessionHistory = useCallback(() => {
     try {
       const saved = localStorage.getItem('match2GameSessions');
       if (saved) {
-        const history = JSON.parse(saved);
-        const validHistory = Array.isArray(history) ? history : [];
-        setSessionHistory(validHistory);
-        sessionHistoryRef.current = validHistory;
+        const parsed = JSON.parse(saved);
+        // Validate và clean up mỗi session
+        const validated = parsed
+          .map(validateSession)
+          .filter(session => session !== null);
+        // Giới hạn chỉ lưu 10 session gần nhất
+        const limited = validated.slice(-10);
+        
+        // Nếu có thay đổi, save lại
+        if (validated.length !== parsed.length) {
+          localStorage.setItem('match2GameSessions', JSON.stringify(limited));
+          console.log('🔧 Cleaned up invalid sessions from localStorage');
+        }
+        
+        setSessionHistory(limited);
+        sessionHistoryRef.current = limited;
       }
     } catch (error) {
       console.error('Failed to load session history:', error);
+      // Nếu localStorage bị corrupt, clear nó
+      localStorage.removeItem('match2GameSessions');
       setSessionHistory([]);
       sessionHistoryRef.current = [];
     }

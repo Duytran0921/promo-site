@@ -186,11 +186,18 @@ const Match2Foreground = React.memo(({
     }
   }, [score, setScore, gameStarted]);
   
-  // Đồng bộ topScore từ React state vào Rive
+  // Đồng bộ topScore từ React state vào Rive - chỉ khi có topScore thực tế
   React.useEffect(() => {
     if (topScore !== undefined && setTopScore) {
-      console.log('🔄 Syncing topScore to Rive:', topScore);
-      setTopScore(topScore);
+      // Chỉ sync topScore khi có điểm cao thực tế (> 0)
+      if (topScore > 0) {
+        console.log('🔄 Syncing topScore to Rive:', topScore);
+        setTopScore(topScore);
+      } else {
+        // Khi không có topScore, sync -1 để báo hiệu cho Rive ẩn
+        console.log('🔄 Not syncing topScore to Rive (topScore = 0)');
+        setTopScore(-1);
+      }
     }
   }, [topScore, setTopScore]);
 
