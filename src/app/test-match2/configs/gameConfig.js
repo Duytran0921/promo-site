@@ -98,7 +98,7 @@ export const bannerConfig = {
   cols: 5,
   minValue: 1,
   maxValue: 4,
-  autoPauseTimer: 8000, // 8 seconds
+  autoPauseTimer: 3000, // 3 seconds
   gameMode: 'normal',
   timeUpDuration: 25000, // 25 seconds for timeUp mode
   cardGap: 0,

@@ -70,6 +70,64 @@ const StandaloneMatch2Game = React.forwardRef(({
     getSessionStats
   } = useMatch2GameWithConfig(gameConfig);
   
+  // State để lưu trữ điểm số cuối cùng khi game thắng
+  const [lastWonScore, setLastWonScore] = useState(0);
+  
+  // Tính toán score và topScore
+  const currentScore = React.useMemo(() => {
+    // Nếu game đã thắng và có điểm số được lưu, hiển thị điểm đó
+    if (isGameWon && lastWonScore > 0) {
+      return lastWonScore;
+    }
+    // Chỉ hiển thị điểm số khi game đã thực sự bắt đầu
+    if (isGameStarted && currentSession?.scoring?.totalScore) {
+      return currentSession.scoring.totalScore;
+    }
+    // Mặc định hiển thị 0
+    return 0;
+  }, [isGameWon, lastWonScore, isGameStarted, currentSession?.scoring?.totalScore]);
+  
+  const topScore = React.useMemo(() => {
+    if (!sessionHistory || sessionHistory.length === 0) return 0;
+    return Math.max(...sessionHistory.map(session => 
+      session.scoring?.finalScore || session.scoring?.totalScore || 0
+    ));
+  }, [sessionHistory]);
+  
+  // Ref để track điểm số trước khi session bị xóa
+  const previousScoreRef = React.useRef(0);
+  
+  // Effect để track điểm số trong khi chơi
+  React.useEffect(() => {
+    if (currentSession?.scoring?.totalScore) {
+      previousScoreRef.current = currentSession.scoring.totalScore;
+    }
+  }, [currentSession?.scoring?.totalScore]);
+  
+  // Effect để lưu điểm số khi game thắng
+  React.useEffect(() => {
+    if (isGameWon) {
+      // Khi game thắng, lưu điểm số từ ref (vì currentSession có thể đã bị xóa)
+      const scoreToSave = currentSession?.scoring?.totalScore || previousScoreRef.current;
+      if (scoreToSave > 0) {
+        setLastWonScore(scoreToSave);
+      }
+    } else if (!isGameWon && !isGameStarted && !isSessionActive) {
+      // Reset điểm số đã lưu khi không có session active (game hoàn toàn reset)
+      setLastWonScore(0);
+      previousScoreRef.current = 0;
+    }
+  }, [isGameWon, isGameStarted, isSessionActive, currentSession?.scoring?.totalScore]);
+  
+  // Effect để reset điểm số khi component mount lần đầu (chỉ chạy một lần)
+  React.useEffect(() => {
+    // Chỉ reset nếu không có session history (lần đầu tiên vào game)
+    if (!sessionHistory || sessionHistory.length === 0) {
+      setLastWonScore(0);
+      previousScoreRef.current = 0;
+    }
+  }, []); // Empty dependency array - chỉ chạy khi mount
+  
   // Handle pointer enter để reset auto-pause timer và inactivity timer
   const handlePointerEnter = useCallback(() => {
     if (isGameStarted) {
@@ -223,6 +281,8 @@ const StandaloneMatch2Game = React.forwardRef(({
           gameMode={config.gameMode}
           twoCardOpenNoMatch={twoCardOpenNoMatch} // Thêm prop mới
           twoCardOpenAndMatch={twoCardOpenAndMatch} // Thêm prop mới
+          score={currentScore} // Điểm số hiện tại
+          topScore={topScore} // Điểm cao nhất
           onPointerActivity={trackPointerActivity}
         />
         

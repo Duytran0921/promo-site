@@ -152,7 +152,9 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     trackMatch,
     sessionHistory,
     clearSessionHistory,
-    getSessionStats
+    getSessionStats,
+    calculateMatchScore,
+    calculateFinalScore
   } = useGameSession();
   
   // Computed values
@@ -802,7 +804,11 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
     isSessionActive,
     sessionHistory,
     clearSessionHistory,
-    getSessionStats
+    getSessionStats,
+    
+    // Scoring
+    calculateMatchScore,
+    calculateFinalScore
   };
 };
 

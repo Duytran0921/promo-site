@@ -79,6 +79,39 @@ export const useGameSession = () => {
     return `session_${timestamp}_${random}`;
   }, []);
 
+  // Tính điểm cho một match dựa trên thời gian
+  const calculateMatchScore = useCallback((matchTime, totalPairs) => {
+    // Base score: 100 điểm cho mỗi match
+    const baseScore = 100;
+    
+    // Time bonus: giảm điểm theo thời gian (tối đa 50 điểm bonus)
+    // Nếu match trong 2 giây: full bonus
+    // Nếu match trong 10 giây: không có bonus
+    const timeBonus = Math.max(0, Math.min(50, 50 - (matchTime - 2) * 6.25));
+    
+    // Efficiency score: bonus dựa trên tổng số cặp (game khó hơn = điểm cao hơn)
+    const efficiencyScore = Math.floor(totalPairs / 2);
+    
+    return Math.round(baseScore + timeBonus + efficiencyScore);
+  }, []);
+
+  // Tính tổng điểm cuối game
+  const calculateFinalScore = useCallback((session) => {
+    if (!session || !session.scoring) return 0;
+    
+    const { matchScores, totalScore } = session.scoring;
+    const { completionTime, startTime } = session.timestamps;
+    const totalPairs = Math.floor(session.config.totalCards / 2);
+    
+    // Completion bonus: 20% của total score nếu hoàn thành game
+    let completionBonus = 0;
+    if (session.completed && completionTime) {
+      completionBonus = Math.round(totalScore * 0.2);
+    }
+    
+    return totalScore + completionBonus;
+  }, []);
+
   // Bắt đầu session mới
   const startSession = useCallback((gameConfig) => {
     const sessionId = generateSessionId();
@@ -103,6 +136,12 @@ export const useGameSession = () => {
         totalClicks: 0,
         matchedPairs: 0,
         matchTimes: []
+      },
+      scoring: {
+        matchScores: [],
+        totalScore: 0,
+        finalScore: 0,
+        averageMatchScore: 0
       },
       completed: false
     };
@@ -145,7 +184,7 @@ export const useGameSession = () => {
       
       console.log(`🖱️ Click tracked: ${clickCountRef.current} clicks`);
     }
-  }, [isSessionActive, updateSessionInHistory]);
+  }, [isSessionActive, updateSessionInHistory, calculateFinalScore]);
 
   // Track match
   const trackMatch = useCallback((pairIndex) => {
@@ -155,6 +194,15 @@ export const useGameSession = () => {
       
       matchTimesRef.current.push(timeFromStart);
       
+      // Tính điểm cho match này
+      const totalPairs = Math.floor(currentSessionRef.current.config.totalCards / 2);
+      const matchScore = calculateMatchScore(timeFromStart, totalPairs);
+      
+      // Update scoring data
+      const newMatchScores = [...currentSessionRef.current.scoring.matchScores, matchScore];
+      const newTotalScore = newMatchScores.reduce((sum, score) => sum + score, 0);
+      const newAverageScore = Math.round(newTotalScore / newMatchScores.length);
+      
       // Update session với match mới
       const updatedSession = {
         ...currentSessionRef.current,
@@ -162,6 +210,12 @@ export const useGameSession = () => {
           ...currentSessionRef.current.gameplay,
           matchedPairs: pairIndex + 1,
           matchTimes: [...matchTimesRef.current]
+        },
+        scoring: {
+          ...currentSessionRef.current.scoring,
+          matchScores: newMatchScores,
+          totalScore: newTotalScore,
+          averageMatchScore: newAverageScore
         }
       };
       
@@ -177,26 +231,38 @@ export const useGameSession = () => {
       // Update trong localStorage
       updateSessionInHistory(updatedSession);
       
-      console.log(`🎯 Match ${pairIndex + 1} tracked at ${timeFromStart.toFixed(2)}s`);
+      console.log(`🎯 Match ${pairIndex + 1} tracked at ${timeFromStart.toFixed(2)}s - Score: ${matchScore}`);
     }
-  }, [isSessionActive, updateSessionInHistory]);
+  }, [isSessionActive, updateSessionInHistory, calculateMatchScore]);
 
   // Kết thúc session
   const endSession = useCallback((isCompleted = false) => {
     if (currentSessionRef.current && isSessionActive) {
       const endTime = Date.now();
-      const finalSession = {
+      
+      // Tính final score
+      const tempSession = {
         ...currentSessionRef.current,
+        completed: isCompleted,
         timestamps: {
           ...currentSessionRef.current.timestamps,
           completionTime: endTime
-        },
+        }
+      };
+      
+      const finalScore = calculateFinalScore(tempSession);
+      
+      const finalSession = {
+        ...tempSession,
         gameplay: {
           ...currentSessionRef.current.gameplay,
           totalClicks: clickCountRef.current,
           matchTimes: [...matchTimesRef.current]
         },
-        completed: isCompleted
+        scoring: {
+          ...currentSessionRef.current.scoring,
+          finalScore: finalScore
+        }
       };
 
       // Update session cuối cùng trong history
@@ -209,7 +275,7 @@ export const useGameSession = () => {
       matchTimesRef.current = [];
       startTimeRef.current = null;
 
-      console.log('🏁 Game session ended:', finalSession.sessionId, isCompleted ? '(completed)' : '(incomplete)');
+      console.log('🏁 Game session ended:', finalSession.sessionId, isCompleted ? '(completed)' : '(incomplete)', `Final Score: ${finalScore}`);
       return finalSession;
     }
   }, [isSessionActive, updateSessionInHistory]);
@@ -268,6 +334,10 @@ export const useGameSession = () => {
     clearSessionHistory,
     
     // Statistics
-    getSessionStats
+    getSessionStats,
+    
+    // Scoring
+    calculateMatchScore,
+    calculateFinalScore
   };
-}; 
+};

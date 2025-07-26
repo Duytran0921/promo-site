@@ -26,6 +26,8 @@ const Match2Foreground = React.memo(({
   twoCardOpenNoMatch = false, // Thêm prop mới
   twoCardOpenAndMatch = false, // Thêm prop mới
   timer = 0,
+  score = 0, // Điểm số hiện tại
+  topScore = 0, // Điểm cao nhất
   onPointerActivity = null
 }) => {
   const { rive, RiveComponent } = useRive({
@@ -54,6 +56,10 @@ const Match2Foreground = React.memo(({
   const { setValue: setTwoCardOpenNoMatch } = useViewModelInstanceBoolean('twoCardOpenNoMatch', gameFGInstance);
   const { setValue: setTwoCardOpenAndMatch } = useViewModelInstanceBoolean('twoCardOpenAndMatch', gameFGInstance);
   const { setValue: setTimer } = useViewModelInstanceNumber('timer', gameFGInstance);
+  
+  // Truyền score và topScore vào Rive
+  const { setValue: setScore } = useViewModelInstanceNumber('property of sideBar/score', gameFGInstance);
+  const { setValue: setTopScore } = useViewModelInstanceNumber('property of sideBar/topScore', gameFGInstance);
   
   // Truyền button label động vào Rive
   const { setValue: setButtonLabel } = useViewModelInstanceString('property of Button/label', gameFGInstance);
@@ -164,6 +170,29 @@ const Match2Foreground = React.memo(({
       setTimer(timer);
     }
   }, [timer, setTimer]);
+  
+  // Đồng bộ score từ React state vào Rive - chỉ khi game đã bắt đầu hoặc có điểm số
+  React.useEffect(() => {
+    if (score !== undefined && setScore) {
+      // Chỉ sync score khi game đã bắt đầu hoặc khi có điểm số thực tế (> 0)
+      if (gameStarted || score > 0) {
+        console.log('🔄 Syncing score to Rive:', score);
+        setScore(score);
+      } else {
+        // Khi chưa bắt đầu game và score = 0, không sync hoặc sync giá trị âm để ẩn
+        console.log('🔄 Not syncing score to Rive (game not started and score = 0)');
+        setScore(-1); // Có thể dùng -1 để báo hiệu cho Rive ẩn score
+      }
+    }
+  }, [score, setScore, gameStarted]);
+  
+  // Đồng bộ topScore từ React state vào Rive
+  React.useEffect(() => {
+    if (topScore !== undefined && setTopScore) {
+      console.log('🔄 Syncing topScore to Rive:', topScore);
+      setTopScore(topScore);
+    }
+  }, [topScore, setTopScore]);
 
   return (
     <div 
