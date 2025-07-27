@@ -74,9 +74,9 @@ const BasicInfoForm = ({ isOpen, onClose }) => {
       if (result.success) {
         toast.success('✅ Cảm ơn bạn đã gửi thông tin! Chúng tôi sẽ liên hệ sớm nhất.');
         
-        // Gửi thông báo WhatsApp
+        // Gửi thông báo Telegram (không ảnh hưởng đến UX nếu thất bại)
         try {
-          const whatsappResponse = await fetch('/api/whatsapp/', {
+          const telegramResponse = await fetch('/api/telegram/', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -84,16 +84,35 @@ const BasicInfoForm = ({ isOpen, onClose }) => {
             body: JSON.stringify(submissionData),
           });
           
-          const whatsappResult = await whatsappResponse.json();
+          const telegramResult = await telegramResponse.json();
           
-          if (whatsappResult.success) {
-            console.log('WhatsApp notification sent successfully');
+          if (telegramResult.success) {
+            console.log('Telegram notification sent successfully');
           } else {
-            console.warn('WhatsApp notification failed:', whatsappResult.error);
+            console.log('Telegram notification failed:', telegramResult.error);
           }
-        } catch (whatsappError) {
-          console.warn('WhatsApp notification error:', whatsappError);
-          // Không hiển thị lỗi WhatsApp cho user vì form đã gửi thành công
+        } catch (telegramError) {
+          console.log('Telegram notification error:', telegramError);
+        }
+
+        // Gửi thông báo Email (backup notification)
+        try {
+          const emailResponse = await fetch('/api/email/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(submissionData),
+          });
+
+          const emailResult = await emailResponse.json();
+          if (emailResult.success) {
+            console.log('Email notification sent successfully');
+          } else {
+            console.log('Email notification failed:', emailResult.error);
+          }
+        } catch (emailError) {
+          console.log('Email notification error:', emailError);
         }
         
         // Reset form
