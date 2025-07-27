@@ -47,6 +47,9 @@ importers:
       next:
         specifier: ^14.2.30
         version: 14.2.30(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.89.2)
+      nodemailer:
+        specifier: ^7.0.5
+        version: 7.0.5
       rc-slider:
         specifier: ^10.5.0
         version: 10.6.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1069,6 +1072,10 @@ packages:
 
   node-releases@2.0.19:
     resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}
+
+  nodemailer@7.0.5:
+    resolution: {integrity: sha512-nsrh2lO3j4GkLLXoeEksAMgAOqxOv6QumNRVQTJwKH4nuiww6iC2y7GyANs9kRAxCexg3+lTWM3PZ91iLlVjfg==}
+    engines: {node: '>=6.0.0'}
 
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
@@ -2480,6 +2487,8 @@ snapshots:
       formdata-polyfill: 4.0.10
 
   node-releases@2.0.19: {}
+
+  nodemailer@7.0.5: {}
 
   normalize-path@3.0.0: {}
 
