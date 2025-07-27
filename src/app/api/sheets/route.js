@@ -29,7 +29,7 @@ export async function POST(request) {
     // Thêm dữ liệu vào sheet
     const result = await googleSheetsService.addRow(data);
     
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: 'Dữ liệu đã được gửi thành công!',
       data: {
@@ -37,6 +37,10 @@ export async function POST(request) {
         timestamp: new Date().toISOString()
       }
     });
+    
+    // Đảm bảo encoding UTF-8 cho tiếng Việt
+    response.headers.set('Content-Type', 'application/json; charset=utf-8');
+    return response;
 
   } catch (error) {
     console.error('❌ API Error:', error);
@@ -72,11 +76,15 @@ export async function GET(request) {
     } else {
       // Lấy tất cả dữ liệu
       const rows = await googleSheetsService.getAllRows();
-      return NextResponse.json({ 
+      const response = NextResponse.json({ 
         success: true, 
         data: rows,
         count: rows.length
       });
+      
+      // Đảm bảo encoding UTF-8 cho tiếng Việt
+      response.headers.set('Content-Type', 'application/json; charset=utf-8');
+      return response;
     }
 
   } catch (error) {
@@ -114,11 +122,15 @@ export async function PUT(request) {
 
     await googleSheetsService.updateHeaders(headers);
     
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: 'Headers đã được cập nhật thành công!',
       headers
     });
+    
+    // Đảm bảo encoding UTF-8 cho tiếng Việt
+    response.headers.set('Content-Type', 'application/json; charset=utf-8');
+    return response;
 
   } catch (error) {
     console.error('❌ API Error:', error);
