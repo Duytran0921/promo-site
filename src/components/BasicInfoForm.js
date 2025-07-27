@@ -74,6 +74,28 @@ const BasicInfoForm = ({ isOpen, onClose }) => {
       if (result.success) {
         toast.success('✅ Cảm ơn bạn đã gửi thông tin! Chúng tôi sẽ liên hệ sớm nhất.');
         
+        // Gửi thông báo WhatsApp
+        try {
+          const whatsappResponse = await fetch('/api/whatsapp/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(submissionData),
+          });
+          
+          const whatsappResult = await whatsappResponse.json();
+          
+          if (whatsappResult.success) {
+            console.log('WhatsApp notification sent successfully');
+          } else {
+            console.warn('WhatsApp notification failed:', whatsappResult.error);
+          }
+        } catch (whatsappError) {
+          console.warn('WhatsApp notification error:', whatsappError);
+          // Không hiển thị lỗi WhatsApp cho user vì form đã gửi thành công
+        }
+        
         // Reset form
         setFormData({
           fullName: '',
