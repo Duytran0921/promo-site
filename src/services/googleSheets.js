@@ -57,8 +57,8 @@ class GoogleSheetsService {
         await this.sheet.loadHeaderRow();
       } catch (error) {
         if (error.message.includes('No values in the header row')) {
-          // Tự động tạo headers mặc định
-          const defaultHeaders = ['name', 'email', 'message', 'timestamp', 'date', 'time'];
+          // Tự động tạo headers mặc định cho cả GoogleSheetsForm và BasicInfoForm
+          const defaultHeaders = ['name', 'email', 'phone', 'company', 'message', 'requirements', 'requirementDetails', 'timestamp', 'date', 'time'];
           await this.sheet.setHeaderRow(defaultHeaders);
           console.log('✅ Đã tạo headers mặc định:', defaultHeaders);
           await this.sheet.loadHeaderRow();

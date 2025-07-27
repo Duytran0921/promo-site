@@ -1,6 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 import { FaTimes, FaUser, FaEnvelope, FaPhone, FaBuilding, FaBriefcase, FaChevronDown } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 
 const BasicInfoForm = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ const BasicInfoForm = ({ isOpen, onClose }) => {
     requirements: '',
     requirementDetails: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const industryOptions = [
     'Đơn vị triển khai Zalo Miniapp',
@@ -44,26 +46,57 @@ const BasicInfoForm = ({ isOpen, onClose }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Xử lý submit form ở đây
-    console.log('Form data:', formData);
-    alert('Cảm ơn bạn đã gửi thông tin! Chúng tôi sẽ liên hệ sớm nhất.');
-    
-    // Reset form
-    setFormData({
-      fullName: '',
-      phone: '',
-      company: '',
-      industry: '',
-      // customIndustry: '',
-      // position: '',
-      email: '',
-      requirements: '',
-      requirementDetails: ''
-    });
-    
-    onClose();
+    setIsSubmitting(true);
+
+    try {
+      // Chuẩn bị dữ liệu để gửi lên Google Sheets
+      const submissionData = {
+        name: formData.fullName,
+        phone: formData.phone,
+        company: formData.company,
+        email: formData.email,
+        requirements: formData.requirements,
+        requirementDetails: formData.requirementDetails || 'Không có'
+      };
+
+      const response = await fetch('/api/sheets/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('✅ Cảm ơn bạn đã gửi thông tin! Chúng tôi sẽ liên hệ sớm nhất.');
+        
+        // Reset form
+        setFormData({
+          fullName: '',
+          phone: '',
+          company: '',
+          industry: '',
+          customIndustry: '',
+          position: '',
+          email: '',
+          requirements: '',
+          requirementDetails: ''
+        });
+        
+        onClose();
+      } else {
+        toast.error(`❌ ${result.error || 'Có lỗi xảy ra khi gửi thông tin'}`);
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      toast.error('❌ Có lỗi xảy ra khi gửi thông tin. Vui lòng thử lại.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -277,9 +310,10 @@ const BasicInfoForm = ({ isOpen, onClose }) => {
             </button>
             <button
               type="submit"
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+              disabled={isSubmitting}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
             >
-              Gửi thông tin
+              {isSubmitting ? '⏳ Đang gửi...' : 'Gửi thông tin'}
             </button>
           </div>
         </form>
