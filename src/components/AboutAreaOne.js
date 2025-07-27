@@ -43,7 +43,7 @@ const AboutAreaOne = () => {
               data-aos-duration='1500'
             >
               <div className='section-title mt-5 mt-lg-0'>
-                <h6 className='sub-title'>ABOUT US</h6>
+                {/* <h6 className='sub-title'>ABOUT US</h6> */}
                 <h2 className='title'>
                    <span>GAMIFY</span> EVERY BUSINESS GOAL
                 </h2>

@@ -79,11 +79,11 @@ const StandaloneMatch2Game = React.forwardRef(({
     if (isGameWon && lastWonScore > 0) {
       return lastWonScore;
     }
-    // Chỉ hiển thị điểm số khi game đã thực sự bắt đầu
-    if (isGameStarted && currentSession?.scoring?.totalScore) {
+    // Chỉ hiển thị điểm số khi có match thực sự (totalScore > 0) và game đã bắt đầu
+    if (isGameStarted && currentSession?.scoring?.totalScore && currentSession.scoring.totalScore > 0) {
       return currentSession.scoring.totalScore;
     }
-    // Mặc định hiển thị 0
+    // Mặc định hiển thị 0 - không hiển thị điểm số khi chưa có match
     return 0;
   }, [isGameWon, lastWonScore, isGameStarted, currentSession?.scoring?.totalScore]);
   

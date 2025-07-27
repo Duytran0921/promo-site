@@ -24,7 +24,7 @@ export default function Match2GameBanner() {
   };
 
   return (
-    <section className=" bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center pt-16">
+    <section className=" bg-white flex items-center justify-center pt-16">
       <div className="w-full px-16">
         <div className="flex justify-center">
           <StandaloneMatch2Game

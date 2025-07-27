@@ -444,7 +444,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       
       return newStates;
     });
-  }, [totalCards, cardIndices, minValue, maxValue, cachedLabelUrls, cachedValueImgUrls, config]);
+  }, [totalCards, minValue, maxValue, config.labelOn, config.valueImgOn]); // Simplified dependencies
   
   // Game control functions
   
@@ -535,7 +535,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       resetUnifiedInactivityTimer();
     }
     // Không gọi resetUnifiedInactivityTimer khi game started = true
-  }, [cardIndices, config, startSession, config.gameMode, resetUnifiedInactivityTimer, setIsGameStarted, setIsGameWon, setIsGameLose, setCardStates, setGameRestartKey, isWorkerReady, cachedLabelUrls, cachedValueImgUrls, minValue]); // Removed cardStates from dependencies to prevent infinite loop
+  }, [config.gameMode, config.labelOn, config.valueImgOn, minValue, isWorkerReady]); // Simplified dependencies to prevent circular references
   
 
   
@@ -632,14 +632,17 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
         generateRandomPairs();
         setHasInitialRandomized(true);
         
-        // Auto start if configured
+        // Auto start if configured - sử dụng ref để tránh dependency
         if (config.autoStart) {
-          startGame();
+          // Delay thêm để tránh race condition với generateRandomPairs
+          setTimeout(() => {
+            startGame();
+          }, 50);
         }
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [cardIndices.length, hasInitialRandomized, generateRandomPairs, config.autoStart, startGame]);
+  }, [cardIndices.length, hasInitialRandomized]); // Removed generateRandomPairs, startGame from dependencies
   
   // Generate random pairs when cardIndices changes (after restart)
   useEffect(() => {
@@ -647,7 +650,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       console.log('🎲 useEffect: Generating random pairs after restart');
       generateRandomPairs();
     }
-  }, [gameRestartKey, generateRandomPairs]);
+  }, [gameRestartKey]); // Removed generateRandomPairs from dependencies
 
   // Chạy random pairs khi rows hoặc cols thay đổi (sau khi đã khởi tạo lần đầu)
   useEffect(() => {
@@ -658,7 +661,7 @@ export const useMatch2GameWithConfig = (gameConfig = defaultConfig) => {
       }, 50);
       return () => clearTimeout(timer);
     }
-  }, [rows, cols, hasInitialRandomized, generateRandomPairs]);
+  }, [rows, cols, hasInitialRandomized]); // Removed generateRandomPairs from dependencies
 
   // Logic game: Kiểm tra khi có 2 card mở để xử lý match/không match
   useEffect(() => {

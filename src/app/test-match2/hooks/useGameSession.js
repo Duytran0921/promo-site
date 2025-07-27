@@ -184,7 +184,7 @@ export const useGameSession = () => {
       
       console.log(`🖱️ Click tracked: ${clickCountRef.current} clicks`);
     }
-  }, [isSessionActive, updateSessionInHistory, calculateFinalScore]);
+  }, [isSessionActive, updateSessionInHistory]); // Removed calculateFinalScore from dependencies as it's not used in trackClick
 
   // Track match
   const trackMatch = useCallback((pairIndex) => {
@@ -278,7 +278,7 @@ export const useGameSession = () => {
       console.log('🏁 Game session ended:', finalSession.sessionId, isCompleted ? '(completed)' : '(incomplete)', `Final Score: ${finalScore}`);
       return finalSession;
     }
-  }, [isSessionActive, updateSessionInHistory]);
+  }, [isSessionActive, updateSessionInHistory, calculateFinalScore]); // Added calculateFinalScore as it's used in endSession
 
   // Clear session history
   const clearSessionHistory = useCallback(() => {
