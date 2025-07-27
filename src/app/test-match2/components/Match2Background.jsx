@@ -8,7 +8,7 @@ import {
   Layout,
   Fit,
   Alignment,
-} from '@rive-app/react-webgl2';
+} from '@rive-app/react-canvas';
 
 // Background Rive Component
 const Match2Background = React.memo(({ isGameWon, pointerEventsEnabled = false, onPointerActivity = null }) => {

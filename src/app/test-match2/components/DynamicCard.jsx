@@ -11,7 +11,7 @@ import {
   Fit,
   Alignment,
   decodeImage
-} from '@rive-app/react-webgl2';
+} from '@rive-app/react-canvas';
 
 // Dynamic Card Component
 const DynamicCard = React.memo(({ 

@@ -7,21 +7,6 @@ import StandaloneMatch2Game from '../components/StandaloneMatch2Game';
  * Điểm số sẽ được giữ lại cho đến khi game restart (isGameWon chuyển về false)
  */
 export default function TestScorePersistencePage() {
-  const clearSessionHistory = () => {
-    localStorage.removeItem('match2-session-history');
-    window.location.reload();
-  };
-
-  const showSessionHistory = () => {
-    const history = localStorage.getItem('match2-session-history');
-    if (history) {
-      console.log('📊 Current Session History:', JSON.parse(history));
-      alert('Session history logged to console. Check browser console.');
-    } else {
-      alert('No session history found in localStorage.');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
@@ -40,21 +25,6 @@ export default function TestScorePersistencePage() {
               <li>4. Điểm số sẽ reset về 0 khi game restart</li>
               <li>5. Top Score sẽ được cập nhật nếu điểm mới cao hơn</li>
             </ol>
-          </div>
-          
-          <div className="text-center space-x-4">
-            <button 
-              onClick={showSessionHistory}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Show Session History
-            </button>
-            <button 
-              onClick={clearSessionHistory}
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              Clear Session History
-            </button>
           </div>
         </div>
         

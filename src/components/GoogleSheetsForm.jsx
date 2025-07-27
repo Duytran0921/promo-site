@@ -28,12 +28,12 @@ export default function GoogleSheetsForm() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/sheets', {
+      const response = await fetch('/api/sheets/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submissionData),
       });
 
       const result = await response.json();
@@ -64,7 +64,7 @@ export default function GoogleSheetsForm() {
 
   const fetchData = async () => {
     try {
-      const response = await fetch('/api/sheets');
+      const response = await fetch('/api/sheets/');
       const result = await response.json();
       
       if (result.success) {
@@ -84,7 +84,7 @@ export default function GoogleSheetsForm() {
     try {
       const headers = ['name', 'email', 'phone', 'message', 'category', 'timestamp', 'date', 'time'];
       
-      const response = await fetch('/api/sheets', {
+      const response = await fetch('/api/sheets/', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

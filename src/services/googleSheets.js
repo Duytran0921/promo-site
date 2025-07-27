@@ -52,7 +52,21 @@ class GoogleSheetsService {
         this.sheet = this.doc.sheetsByIndex[0];
       }
 
-      await this.sheet.loadHeaderRow();
+      // Kiểm tra và tạo headers nếu cần
+      try {
+        await this.sheet.loadHeaderRow();
+      } catch (error) {
+        if (error.message.includes('No values in the header row')) {
+          // Tự động tạo headers mặc định
+          const defaultHeaders = ['name', 'email', 'message', 'timestamp', 'date', 'time'];
+          await this.sheet.setHeaderRow(defaultHeaders);
+          console.log('✅ Đã tạo headers mặc định:', defaultHeaders);
+          await this.sheet.loadHeaderRow();
+        } else {
+          throw error;
+        }
+      }
+      
       this.isInitialized = true;
       
       console.log('✅ Kết nối Google Sheets thành công!');
